@@ -15,12 +15,21 @@
   <style>
     body { background-color: #0b0c10; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
     
-    .clase-Mutante { border-left: 4px solid #eab308; background: linear-gradient(90deg, rgba(234,179,8,0.12) 0%, rgba(17,24,39,0.95) 100%); }
-    .clase-Habil { border-left: 4px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.12) 0%, rgba(17,24,39,0.95) 100%); }
-    .clase-Cientifico { border-left: 4px solid #22c55e; background: linear-gradient(90deg, rgba(34,197,94,0.12) 0%, rgba(17,24,39,0.95) 100%); }
-    .clase-Mistico { border-left: 4px solid #a855f7; background: linear-gradient(90deg, rgba(168,85,247,0.12) 0%, rgba(17,24,39,0.95) 100%); }
-    .clase-Cosmico { border-left: 4px solid #38bdf8; background: linear-gradient(90deg, rgba(56,189,248,0.12) 0%, rgba(17,24,39,0.95) 100%); }
-    .clase-Tecnologico { border-left: 4px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    /* Fondos de tarjeta por clase */
+    .clase-Mutante { border-left: 3px solid #eab308; background: linear-gradient(90deg, rgba(234,179,8,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Habil { border-left: 3px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Cientifico { border-left: 3px solid #22c55e; background: linear-gradient(90deg, rgba(34,197,94,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Mistico { border-left: 3px solid #a855f7; background: linear-gradient(90deg, rgba(168,85,247,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Cosmico { border-left: 3px solid #38bdf8; background: linear-gradient(90deg, rgba(56,189,248,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Tecnologico { border-left: 3px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+
+    /* Redondel del avatar con el color de su clase */
+    .avatar-Mutante { border: 2px solid #eab308; box-shadow: 0 0 6px rgba(234, 179, 8, 0.45); }
+    .avatar-Habil { border: 2px solid #ef4444; box-shadow: 0 0 6px rgba(239, 68, 68, 0.45); }
+    .avatar-Cientifico { border: 2px solid #22c55e; box-shadow: 0 0 6px rgba(34, 197, 94, 0.45); }
+    .avatar-Mistico { border: 2px solid #a855f7; box-shadow: 0 0 6px rgba(168, 85, 247, 0.45); }
+    .avatar-Cosmico { border: 2px solid #38bdf8; box-shadow: 0 0 6px rgba(56, 189, 248, 0.45); }
+    .avatar-Tecnologico { border: 2px solid #3b82f6; box-shadow: 0 0 6px rgba(59, 130, 246, 0.45); }
 
     .char-card { transition: transform 0.12s ease, box-shadow 0.12s ease; cursor: pointer; user-select: none; }
     .char-card:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6); }
@@ -58,7 +67,7 @@
       <span class="text-xs font-bold uppercase tracking-wider text-purple-400 mr-1">Filtro Etiquetas TIER LIST:</span>
       <div id="filterBarTier" class="flex flex-wrap gap-1.5"></div>
     </div>
-    <!-- Filtros del juego ordenados por grupos -->
+    <!-- Filtros del juego ordenados por grupos y alfabéticamente / cronológicamente -->
     <div class="space-y-1.5">
       <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Filtro Etiquetas del Juego (por grupos):</span>
       <div id="filterBarGameGroups" class="space-y-2"></div>
@@ -199,7 +208,7 @@
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl">
       <div class="p-5 border-b border-gray-800 flex justify-between items-start">
         <div class="flex items-center gap-3.5">
-          <img id="detailImg" src="" alt="Avatar" class="w-14 h-14 rounded-xl object-cover border border-gray-600 hidden">
+          <img id="detailImg" src="" alt="Avatar" class="w-16 h-16 rounded-full object-cover hidden">
           <div>
             <h3 id="detailName" class="text-xl md:text-2xl font-extrabold text-white"></h3>
             <span id="detailClassBadge" class="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-gray-800 text-gray-300"></span>
@@ -293,7 +302,6 @@
       { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', emoji: '🔴', color: 'bg-red-900/80 text-red-200 border-red-600' }
     ];
 
-    // Grupos actualizados (sin guerras de alianza, desafíos de carina, gestas de alianza ni formador de escuadrón)
     const GAME_TAG_GROUPS = [
       "SAGA",
       "ESTILO DE COMBATE",
@@ -325,6 +333,37 @@
     let activeGameFilters = [];
     let isAdmin = false;
     let sortableInstances = [];
+
+    function getCharTierTags(ch) {
+      return ch.tierTags || ch.tags || [];
+    }
+
+    // =========================================================================
+    // ORDENACIÓN ALFABÉTICA Y CRONOLÓGICA (MÁS ANTIGUOS PRIMERO SI TIENE NÚMEROS)
+    // =========================================================================
+    function sortGameTags(tagArray) {
+      return [...tagArray].sort((a, b) => {
+        const cleanA = a.replace(/^#/, '').trim();
+        const cleanB = b.replace(/^#/, '').trim();
+
+        const numMatchA = cleanA.match(/\d+/);
+        const numMatchB = cleanB.match(/\d+/);
+
+        const isPureNumA = /^\d+$/.test(cleanA);
+        const isPureNumB = /^\d+$/.test(cleanB);
+
+        // Si ambos son números puros (ej: #2017 vs #2023), van los más antiguos primero
+        if (isPureNumA && isPureNumB) {
+          return parseInt(cleanA, 10) - parseInt(cleanB, 10);
+        }
+        // Si uno es un año/número puro y el otro texto, los números van antes
+        if (isPureNumA && !isPureNumB) return -1;
+        if (!isPureNumA && isPureNumB) return 1;
+
+        // Comparación natural en español: ordena A-Z e interpreta números internos de menor a mayor
+        return cleanA.localeCompare(cleanB, 'es', { numeric: true, sensitivity: 'base' });
+      });
+    }
 
     // =========================================================================
     // AUTENTICACIÓN
@@ -441,7 +480,7 @@
     }
 
     // =========================================================================
-    // RENDERIZADO
+    // RENDERIZADO DEL TABLERO Y TARJETAS
     // =========================================================================
     function renderBoard() {
       const container = document.getElementById('tiersContainer');
@@ -510,56 +549,41 @@
 
     function createCharCard(ch) {
       const card = document.createElement('div');
-      card.className = `char-card clase-${ch.clase} rounded-md px-2 py-1.5 text-xs flex items-center justify-between gap-1.5 bg-gray-900 shadow-sm border border-gray-800/80`;
+      card.className = `char-card clase-${ch.clase} rounded-lg px-2.5 py-1.5 flex items-center gap-2.5 bg-gray-900 shadow-sm border border-gray-800/80`;
       card.dataset.id = ch.id;
       card.onclick = () => openDetailModal(ch.id);
-
-      const left = document.createElement('div');
-      left.className = 'flex items-center gap-1.5 min-w-0 flex-1';
 
       if (ch.img) {
         const avatar = document.createElement('img');
         avatar.src = ch.img;
-        avatar.className = 'w-5 h-5 rounded-full object-cover flex-shrink-0 border border-gray-600';
-        left.appendChild(avatar);
+        avatar.className = `w-8 h-8 rounded-full object-cover flex-shrink-0 avatar-${ch.clase} bg-gray-950`;
+        card.appendChild(avatar);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.className = `w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 avatar-${ch.clase} bg-gray-950 text-[11px] font-extrabold text-gray-300`;
+        placeholder.innerText = ch.name ? ch.name.charAt(0).toUpperCase() : '?';
+        card.appendChild(placeholder);
       }
 
       const nameSpan = document.createElement('span');
       const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
       
       const nameLength = ch.name ? ch.name.length : 0;
-      let textSize = 'text-[11px]';
-      if (nameLength > 12) textSize = 'text-[10px]';
-      if (nameLength > 16) textSize = 'text-[9px]';
+      let textSize = 'text-xs';
+      if (nameLength > 15) textSize = 'text-[11px]';
+      if (nameLength > 20) textSize = 'text-[10px]';
 
-      nameSpan.className = `font-bold whitespace-nowrap overflow-hidden text-ellipsis flex-shrink ${textSize} ${hasYoutube ? 'text-red-400 font-extrabold' : 'text-gray-100'}`;
+      nameSpan.className = `font-bold whitespace-nowrap leading-tight ${textSize} ${hasYoutube ? 'text-red-400 font-extrabold' : 'text-gray-100'}`;
       nameSpan.innerText = ch.name;
-      left.appendChild(nameSpan);
-      card.appendChild(left);
-
-      if (ch.tierTags && ch.tierTags.length > 0) {
-        const emojisWrap = document.createElement('div');
-        emojisWrap.className = 'flex items-center gap-0.5 flex-shrink-0';
-        ch.tierTags.forEach(tagId => {
-          const tagObj = TIER_TAGS.find(t => t.id === tagId);
-          if (tagObj) {
-            const emojiSpan = document.createElement('span');
-            emojiSpan.className = 'text-[11px] leading-none';
-            emojiSpan.innerText = tagObj.emoji;
-            emojisWrap.appendChild(emojiSpan);
-          }
-        });
-        card.appendChild(emojisWrap);
-      }
+      card.appendChild(nameSpan);
 
       return card;
     }
 
     // =========================================================================
-    // FILTROS ORDENADOS POR GRUPOS
+    // FILTROS ORDENADOS POR GRUPOS (ALFABÉTICAMENTE Y NÚMEROS ANTIGUOS PRIMERO)
     // =========================================================================
     function renderFilterBars() {
-      // 1. Filtros de Tier List
       const barTier = document.getElementById('filterBarTier');
       barTier.innerHTML = '';
       TIER_TAGS.forEach(tag => {
@@ -579,7 +603,6 @@
         barTier.appendChild(btn);
       });
 
-      // 2. Filtros de Juego ordenados por los grupos existentes
       const groupsBar = document.getElementById('filterBarGameGroups');
       groupsBar.innerHTML = '';
 
@@ -609,7 +632,10 @@
           gLabel.innerText = groupName + ':';
           groupRow.appendChild(gLabel);
 
-          tagSet.forEach(tagName => {
+          // Ordenar alfabéticamente y cronológicamente (más antiguos primero)
+          const sortedTags = sortGameTags(Array.from(tagSet));
+
+          sortedTags.forEach(tagName => {
             const isSelected = activeGameFilters.includes(tagName);
             const btn = document.createElement('button');
             btn.className = `px-2 py-0.5 rounded border font-medium bg-sky-950/80 text-sky-300 border-sky-700/80 transition ${isSelected ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-90'}`;
@@ -645,7 +671,7 @@
     }
 
     function matchesFilters(char) {
-      const charTierTags = char.tierTags || [];
+      const charTierTags = getCharTierTags(char);
       const matchTier = activeTierFilters.every(f => charTierTags.includes(f));
 
       let matchGame = true;
@@ -747,7 +773,8 @@
 
         const groupTags = existingTagsByGroup[groupName];
         if (groupTags && groupTags.size > 0) {
-          groupTags.forEach(tagName => {
+          const sortedGroupTags = sortGameTags(Array.from(groupTags));
+          sortedGroupTags.forEach(tagName => {
             const lbl = document.createElement('label');
             lbl.className = 'flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 bg-gray-800 px-2 py-1 rounded border border-gray-700';
             lbl.innerHTML = `<input type="checkbox" value="${tagName}" class="game-tag-cb rounded bg-gray-900 border-gray-700"> <span>${tagName}</span>`;
@@ -803,8 +830,9 @@
         document.getElementById('charNotes').value = ch.notes || '';
         document.getElementById('charYoutube').value = ch.youtube || '';
         
+        const assignedTierTags = getCharTierTags(ch);
         document.querySelectorAll('.tier-tag-cb').forEach(cb => {
-          cb.checked = (ch.tierTags || []).includes(cb.value);
+          cb.checked = assignedTierTags.includes(cb.value);
         });
 
         if (ch.gameTags) {
@@ -845,14 +873,14 @@
         const groupName = groupDiv.dataset.group;
         const checkedInGroup = Array.from(groupDiv.querySelectorAll('.game-tag-cb:checked')).map(cb => cb.value);
         if (checkedInGroup.length > 0) {
-          gameTagsObj[groupName] = checkedInGroup;
+          gameTagsObj[groupName] = sortGameTags(checkedInGroup);
         }
       });
 
       if (editId) {
         const idx = characters.findIndex(c => c.id === editId);
         if (idx > -1) {
-          characters[idx] = { ...characters[idx], name, clase, img, notes, youtube, tierTags: selectedTierTags, gameTags: gameTagsObj };
+          characters[idx] = { ...characters[idx], name, clase, img, notes, youtube, tierTags: selectedTierTags, tags: selectedTierTags, gameTags: gameTagsObj };
         }
       } else {
         characters.push({
@@ -862,6 +890,7 @@
           tier: 'BENCH',
           subBench: 'bench1',
           tierTags: selectedTierTags,
+          tags: selectedTierTags,
           gameTags: gameTagsObj,
           notes,
           youtube,
@@ -890,11 +919,11 @@
       document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
       document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
 
-      // 1. Etiquetas de Tier List
       const tierTagsContainer = document.getElementById('detailTierTags');
       tierTagsContainer.innerHTML = '';
-      if (ch.tierTags && ch.tierTags.length > 0) {
-        ch.tierTags.forEach(tagId => {
+      const charTierTags = getCharTierTags(ch);
+      if (charTierTags.length > 0) {
+        charTierTags.forEach(tagId => {
           const tagObj = TIER_TAGS.find(t => t.id === tagId);
           if (tagObj) {
             const span = document.createElement('span');
@@ -907,7 +936,6 @@
         tierTagsContainer.innerHTML = '<span class="text-xs text-gray-500 italic">Sin etiquetas de Tier List.</span>';
       }
 
-      // 2. Miniatura de YouTube y Botón (situados antes de las etiquetas del juego)
       const videoSection = document.getElementById('detailVideoSection');
       const ytBtn = document.getElementById('detailYoutubeBtn');
       const ytThumb = document.getElementById('detailYoutubeThumb');
@@ -922,11 +950,10 @@
         videoSection.classList.add('hidden');
       }
 
-      // 3. Etiquetas del Juego (situadas debajo del video)
       const gameTagsContainer = document.getElementById('detailGameTags');
       gameTagsContainer.innerHTML = '';
       if (ch.gameTags && Object.keys(ch.gameTags).length > 0) {
-        Object.keys(ch.gameTags).forEach(groupName => {
+        GAME_TAG_GROUPS.forEach(groupName => {
           const tagList = ch.gameTags[groupName];
           if (Array.isArray(tagList) && tagList.length > 0) {
             const groupBlock = document.createElement('div');
@@ -939,7 +966,7 @@
 
             const pillsWrap = document.createElement('div');
             pillsWrap.className = 'flex flex-wrap gap-1.5';
-            tagList.forEach(tagName => {
+            sortGameTags(tagList).forEach(tagName => {
               const pill = document.createElement('span');
               pill.className = 'text-xs px-2 py-0.5 rounded bg-sky-950/80 text-sky-300 border border-sky-800/60 font-medium';
               pill.innerText = tagName;
@@ -957,6 +984,7 @@
       const imgEl = document.getElementById('detailImg');
       if (ch.img) {
         imgEl.src = ch.img;
+        imgEl.className = `w-16 h-16 rounded-full object-cover avatar-${ch.clase}`;
         imgEl.classList.remove('hidden');
       } else {
         imgEl.classList.add('hidden');
