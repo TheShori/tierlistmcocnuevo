@@ -24,7 +24,7 @@
 
     .char-card { transition: transform 0.12s ease, box-shadow 0.12s ease; cursor: pointer; user-select: none; }
     .char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65); }
-    .drop-zone { min-height: 120px; }
+    .drop-zone { min-height: 100px; }
     .sortable-ghost { opacity: 0.35; border: 2px dashed #a855f7; }
   </style>
 </head>
@@ -69,15 +69,36 @@
       <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto"></div>
     </main>
 
-    <aside id="sidebarBench" class="w-80 bg-gray-900 border-l border-gray-800 p-4 flex flex-col hidden">
-      <div class="mb-3">
-        <h2 class="text-sm font-bold text-white flex items-center justify-between">
-          <span>📥 Nuevos / Sin Clasificar</span>
-          <span id="benchCount" class="bg-purple-600 text-xs px-2 py-0.5 rounded-full">0</span>
-        </h2>
-        <p class="text-xs text-gray-400 mt-1">Arrastra los personajes nuevos desde aquí a su Tier y Clase correspondiente.</p>
+    <!-- MENÚ LATERAL DERECHO ADMIN (CON 3 SECCIONES) -->
+    <aside id="sidebarBench" class="w-80 bg-gray-900 border-l border-gray-800 p-4 flex flex-col hidden space-y-4 overflow-y-auto">
+      
+      <!-- 1. Nuevos Personajes -->
+      <div class="flex flex-col">
+        <div class="mb-1.5 flex items-center justify-between">
+          <span class="text-xs font-bold text-white">📥 Nuevos Personajes</span>
+          <span id="benchCount1" class="bg-purple-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
+        </div>
+        <div id="benchDropZone1" data-tier="BENCH" data-clase="ALL" data-sub="bench1" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[90px] overflow-y-auto"></div>
       </div>
-      <div id="benchDropZone" data-tier="BENCH" data-clase="ALL" class="drop-zone flex-1 bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2.5 space-y-2 overflow-y-auto"></div>
+
+      <!-- 2. Nuevas Ascension+ -->
+      <div class="flex flex-col">
+        <div class="mb-1.5 flex items-center justify-between">
+          <span class="text-xs font-bold text-white">⬆️ Nuevas Ascension+</span>
+          <span id="benchCount2" class="bg-blue-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
+        </div>
+        <div id="benchDropZone2" data-tier="BENCH" data-clase="ALL" data-sub="bench2" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[90px] overflow-y-auto"></div>
+      </div>
+
+      <!-- 3. Nuevos 7 Estrellas -->
+      <div class="flex flex-col">
+        <div class="mb-1.5 flex items-center justify-between">
+          <span class="text-xs font-bold text-white">💜 Nuevos 7 Estrellas</span>
+          <span id="benchCount3" class="bg-indigo-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
+        </div>
+        <div id="benchDropZone3" data-tier="BENCH" data-clase="ALL" data-sub="bench3" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[90px] overflow-y-auto"></div>
+      </div>
+
     </aside>
   </div>
 
@@ -173,13 +194,18 @@
           <div>
             <h3 id="detailName" class="text-xl md:text-2xl font-extrabold text-white"></h3>
             <span id="detailClassBadge" class="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-gray-800 text-gray-300"></span>
-            <div id="detailTags" class="flex flex-wrap gap-1.5 mt-2"></div>
           </div>
         </div>
         <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
       </div>
 
       <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        <!-- Lista de etiquetas detalladas con Nombre y Emoji al abrir -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Etiquetas del Personaje</h4>
+          <div id="detailTags" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
         <div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1.5">Características y Análisis</h4>
           <p id="detailNotes" class="text-gray-200 text-sm whitespace-pre-line bg-gray-950/70 p-3.5 rounded-xl border border-gray-800"></p>
@@ -222,25 +248,25 @@
     const db = firebase.firestore();
 
     const AVAILABLE_TAGS = [
-      { id: 'asc7',       label: '⬆️ Ascensión 7 Estrellas', color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
-      { id: 'gbasico',    label: '💜 7 Estrellas Grupo Básico', color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
-      { id: 'gtitan',     label: '💚 7 Estrellas Cristal Titán', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
-      { id: 'glealtad',   label: '🩷 7 Estrellas Cristal Lealtad', color: 'bg-pink-950/90 text-pink-300 border-pink-700/80' },
-      { id: 'gincursion', label: '💛 7 Estrellas Cristal Incursión', color: 'bg-amber-950/90 text-amber-300 border-amber-700/80' },
-      { id: 'geventos',   label: '🖤 7 Estrellas Eventos', color: 'bg-gray-800 text-gray-200 border-gray-600' },
-      { id: 'gsagas',     label: '🩷 7 Estrellas Sagas', color: 'bg-rose-950/90 text-rose-300 border-rose-700/80' },
-      { id: 'gvalentin',  label: '💖 7 Estrellas San Valentín', color: 'bg-red-950/90 text-red-300 border-red-700/80' },
-      { id: 'gbanquete',  label: '🩶 7 Estrellas Banquete 2025', color: 'bg-slate-800 text-slate-200 border-slate-600' },
-      { id: 'habilidad',  label: '⭐ Habilidad Despertada', color: 'bg-yellow-950/90 text-yellow-300 border-yellow-700/80' },
-      { id: 'singalta',   label: '🔝 Singularidad Alta', color: 'bg-orange-950/90 text-orange-300 border-orange-700/80' },
-      { id: 'suicidas',   label: '💀 Amigable Maestrías Suicidas', color: 'bg-stone-900 text-stone-300 border-stone-700' },
-      { id: 'sinergias',  label: '🤝 Se Vuelve Mejor con Sinergias', color: 'bg-teal-950/90 text-teal-300 border-teal-700/80' },
-      { id: 'saberjugar', label: '🎮 Requiere Saber Jugar Con Él', color: 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80' },
-      { id: 'defensor',   label: '🛡️ Gran Defensor', color: 'bg-cyan-950/90 text-cyan-300 border-cyan-700/80' },
-      { id: 'construccion', label: '🔨 Requiere Construcción', color: 'bg-amber-900/80 text-amber-200 border-amber-600' },
-      { id: 'polvos',     label: '💎 Polvos Primordiales', color: 'bg-sky-950/90 text-sky-300 border-sky-700/80' },
-      { id: 'hasta6',     label: '🟦 Disponible Hasta 6 Estrellas', color: 'bg-blue-900/80 text-blue-200 border-blue-600' },
-      { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', color: 'bg-red-900/80 text-red-200 border-red-600' }
+      { id: 'asc7',       label: '⬆️ Ascensión 7 Estrellas', emoji: '⬆️', color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
+      { id: 'gbasico',    label: '💜 7 Estrellas Grupo Básico', emoji: '💜', color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
+      { id: 'gtitan',     label: '💚 7 Estrellas Cristal Titán', emoji: '💚', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
+      { id: 'glealtad',   label: '🩷 7 Estrellas Cristal Lealtad', emoji: '🩷', color: 'bg-pink-950/90 text-pink-300 border-pink-700/80' },
+      { id: 'gincursion', label: '💛 7 Estrellas Cristal Incursión', emoji: '💛', color: 'bg-amber-950/90 text-amber-300 border-amber-700/80' },
+      { id: 'geventos',   label: '🖤 7 Estrellas Eventos', emoji: '🖤', color: 'bg-gray-800 text-gray-200 border-gray-600' },
+      { id: 'gsagas',     label: '🩷 7 Estrellas Sagas', emoji: '🩷', color: 'bg-rose-950/90 text-rose-300 border-rose-700/80' },
+      { id: 'gvalentin',  label: '💖 7 Estrellas San Valentín', emoji: '💖', color: 'bg-red-950/90 text-red-300 border-red-700/80' },
+      { id: 'gbanquete',  label: '🩶 7 Estrellas Banquete 2025', emoji: '🩶', color: 'bg-slate-800 text-slate-200 border-slate-600' },
+      { id: 'habilidad',  label: '⭐ Habilidad Despertada', emoji: '⭐', color: 'bg-yellow-950/90 text-yellow-300 border-yellow-700/80' },
+      { id: 'singalta',   label: '🔝 Singularidad Alta', emoji: '🔝', color: 'bg-orange-950/90 text-orange-300 border-orange-700/80' },
+      { id: 'suicidas',   label: '💀 Amigable Maestrías Suicidas', emoji: '💀', color: 'bg-stone-900 text-stone-300 border-stone-700' },
+      { id: 'sinergias',  label: '🤝 Se Vuelve Mejor con Sinergias', emoji: '🤝', color: 'bg-teal-950/90 text-teal-300 border-teal-700/80' },
+      { id: 'saberjugar', label: '🎮 Requiere Saber Jugar Con Él', emoji: '🎮', color: 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80' },
+      { id: 'defensor',   label: '🛡️ Gran Defensor', emoji: '🛡️', color: 'bg-cyan-950/90 text-cyan-300 border-cyan-700/80' },
+      { id: 'construccion', label: '🔨 Requiere Construcción', emoji: '🔨', color: 'bg-amber-900/80 text-amber-200 border-amber-600' },
+      { id: 'polvos',     label: '💎 Polvos Primordiales', emoji: '💎', color: 'bg-sky-950/90 text-sky-300 border-sky-700/80' },
+      { id: 'hasta6',     label: '🟦 Disponible Hasta 6 Estrellas', emoji: '🟦', color: 'bg-blue-900/80 text-blue-200 border-blue-600' },
+      { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', emoji: '🔴', color: 'bg-red-900/80 text-red-200 border-red-600' }
     ];
 
     const TIERS = [
@@ -424,34 +450,68 @@
         container.appendChild(tierSection);
       });
 
-      const benchZone = document.getElementById('benchDropZone');
-      benchZone.innerHTML = '';
-      const benchChars = characters.filter(c => c.tier === 'BENCH' && matchesActiveFilters(c));
-      benchChars.forEach(ch => benchZone.appendChild(createCharCard(ch)));
-      document.getElementById('benchCount').innerText = benchChars.length;
+      // Renderizar las 3 secciones del banquillo lateral en Modo Admin
+      const bench1 = document.getElementById('benchDropZone1');
+      const bench2 = document.getElementById('benchDropZone2');
+      const bench3 = document.getElementById('benchDropZone3');
+      
+      bench1.innerHTML = '';
+      bench2.innerHTML = '';
+      bench3.innerHTML = '';
+
+      const benchChars1 = characters.filter(c => (!c.subBench || c.subBench === 'bench1') && c.tier === 'BENCH' && matchesActiveFilters(c));
+      const benchChars2 = characters.filter(c => c.subBench === 'bench2' && c.tier === 'BENCH' && matchesActiveFilters(c));
+      const benchChars3 = characters.filter(c => c.subBench === 'bench3' && c.tier === 'BENCH' && matchesActiveFilters(c));
+
+      benchChars1.forEach(ch => bench1.appendChild(createCharCard(ch)));
+      benchChars2.forEach(ch => bench2.appendChild(createCharCard(ch)));
+      benchChars3.forEach(ch => bench3.appendChild(createCharCard(ch)));
+
+      document.getElementById('benchCount1').innerText = benchChars1.length;
+      document.getElementById('benchCount2').innerText = benchChars2.length;
+      document.getElementById('benchCount3').innerText = benchChars3.length;
 
       initDragAndDrop();
     }
 
     function createCharCard(ch) {
       const card = document.createElement('div');
-      card.className = `char-card clase-${ch.clase} rounded-lg p-2.5 text-xs flex items-center gap-2 bg-gray-900 shadow-sm border border-gray-800/80`;
+      card.className = `char-card clase-${ch.clase} rounded-lg p-2.5 text-xs flex items-center justify-between gap-2 bg-gray-900 shadow-sm border border-gray-800/80`;
       card.dataset.id = ch.id;
       card.onclick = () => openDetailModal(ch.id);
+
+      const left = document.createElement('div');
+      left.className = 'flex items-center gap-2 truncate';
 
       if (ch.img) {
         const avatar = document.createElement('img');
         avatar.src = ch.img;
         avatar.className = 'w-6 h-6 rounded-full object-cover flex-shrink-0 border border-gray-600';
-        card.appendChild(avatar);
+        left.appendChild(avatar);
       }
 
       const nameSpan = document.createElement('span');
-      // Si tiene enlace de YouTube, el nombre se pone en rojo para indicar análisis
       const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
       nameSpan.className = `font-bold text-xs truncate ${hasYoutube ? 'text-red-400 font-extrabold' : 'text-gray-100'}`;
       nameSpan.innerText = ch.name;
-      card.appendChild(nameSpan);
+      left.appendChild(nameSpan);
+      card.appendChild(left);
+
+      // Solo mostrar los emojis de las etiquetas asignadas al lado del nombre en la tarjeta principal
+      if (ch.tags && ch.tags.length > 0) {
+        const emojisWrap = document.createElement('div');
+        emojisWrap.className = 'flex items-center gap-1 flex-shrink-0';
+        ch.tags.forEach(tagId => {
+          const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
+          if (tagObj) {
+            const emojiSpan = document.createElement('span');
+            emojiSpan.className = 'text-xs';
+            emojiSpan.innerText = tagObj.emoji;
+            emojisWrap.appendChild(emojiSpan);
+          }
+        });
+        card.appendChild(emojisWrap);
+      }
 
       return card;
     }
@@ -509,6 +569,7 @@
             const charId = evt.item.dataset.id;
             const targetTier = evt.to.dataset.tier;
             const targetClase = evt.to.dataset.clase;
+            const targetSub = evt.to.dataset.sub; // Si se suelta en una subsección del banquillo
 
             const charObj = characters.find(c => c.id === charId);
             if (!charObj) return;
@@ -516,6 +577,11 @@
             charObj.tier = targetTier;
             if (targetClase !== 'ALL') {
               charObj.clase = targetClase;
+            }
+            if (targetTier === 'BENCH') {
+              charObj.subBench = targetSub || 'bench1';
+            } else {
+              delete charObj.subBench;
             }
 
             const orderedIdsInTarget = Array.from(evt.to.children).map(el => el.dataset.id);
@@ -595,6 +661,7 @@
           name,
           clase,
           tier: 'BENCH',
+          subBench: 'bench1',
           tags: selectedTags,
           notes,
           youtube,
@@ -615,13 +682,14 @@
       document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
       document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
 
+      // Al abrir la ficha, mostrar nombre y emoji completo de cada etiqueta asignada
       const tagsContainer = document.getElementById('detailTags');
       tagsContainer.innerHTML = '';
       (ch.tags || []).forEach(tagId => {
         const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
         if (tagObj) {
           const span = document.createElement('span');
-          span.className = `text-xs px-2 py-0.5 rounded border font-medium ${tagObj.color}`;
+          span.className = `text-xs px-2.5 py-1 rounded-md border font-medium ${tagObj.color}`;
           span.innerText = tagObj.label;
           tagsContainer.appendChild(span);
         }
@@ -635,7 +703,6 @@
         imgEl.classList.add('hidden');
       }
 
-      // Configurar botón de redirección externa a YouTube
       const videoSection = document.getElementById('detailVideoSection');
       const ytBtn = document.getElementById('detailYoutubeBtn');
       if (ch.youtube && ch.youtube.trim() !== "") {
