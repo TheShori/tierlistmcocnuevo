@@ -164,9 +164,9 @@
     </div>
   </div>
 
-  <!-- MODAL DETALLE + YOUTUBE -->
+  <!-- MODAL DETALLE + BOTÓN REDIRECCIÓN YOUTUBE -->
   <div id="detailModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl">
       <div class="p-5 border-b border-gray-800 flex justify-between items-start">
         <div class="flex items-center gap-3.5">
           <img id="detailImg" src="" alt="Avatar" class="w-14 h-14 rounded-xl object-cover border border-gray-600 hidden">
@@ -185,11 +185,12 @@
           <p id="detailNotes" class="text-gray-200 text-sm whitespace-pre-line bg-gray-950/70 p-3.5 rounded-xl border border-gray-800"></p>
         </div>
 
+        <!-- Botón de Redirección a YouTube -->
         <div id="detailVideoSection" class="hidden">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-red-400 mb-1.5">📺 Análisis en YouTube</h4>
-          <div class="aspect-video w-full rounded-xl overflow-hidden border border-gray-800 bg-black">
-            <iframe id="detailYoutubeIframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-          </div>
+          <a id="detailYoutubeBtn" href="#" target="_blank" class="w-full bg-red-600 hover:bg-red-500 text-white font-semibold px-4 py-3 rounded-xl flex items-center justify-center gap-2 text-sm transition shadow-lg">
+            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            <span>Ver análisis completo en YouTube</span>
+          </a>
         </div>
 
         <div id="adminActionsContainer" class="hidden pt-3 border-t border-gray-800 flex justify-between items-center">
@@ -242,7 +243,6 @@
       { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', color: 'bg-red-900/80 text-red-200 border-red-600' }
     ];
 
-    // ORDEN EXACTO SOLICITADO DE ARRIBA A ABAJO
     const TIERS = [
       { id: 'GOAT',        name: 'GOAT TIER',        color: 'from-amber-400 via-yellow-500 to-amber-600 text-black border-yellow-400' },
       { id: 'GOD',         name: 'GOD TIER',         color: 'from-purple-600 via-indigo-600 to-purple-700 text-white border-purple-500' },
@@ -435,40 +435,23 @@
 
     function createCharCard(ch) {
       const card = document.createElement('div');
-      card.className = `char-card clase-${ch.clase} rounded-lg p-2.5 text-xs flex flex-col gap-1.5 bg-gray-900 shadow-sm border border-gray-800/80`;
+      card.className = `char-card clase-${ch.clase} rounded-lg p-2.5 text-xs flex items-center gap-2 bg-gray-900 shadow-sm border border-gray-800/80`;
       card.dataset.id = ch.id;
       card.onclick = () => openDetailModal(ch.id);
-
-      const topRow = document.createElement('div');
-      topRow.className = 'flex items-center gap-2';
 
       if (ch.img) {
         const avatar = document.createElement('img');
         avatar.src = ch.img;
         avatar.className = 'w-6 h-6 rounded-full object-cover flex-shrink-0 border border-gray-600';
-        topRow.appendChild(avatar);
+        card.appendChild(avatar);
       }
 
       const nameSpan = document.createElement('span');
-      nameSpan.className = 'font-bold text-gray-100 text-xs leading-tight';
+      // Si tiene enlace de YouTube, el nombre se pone en rojo para indicar análisis
+      const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
+      nameSpan.className = `font-bold text-xs truncate ${hasYoutube ? 'text-red-400 font-extrabold' : 'text-gray-100'}`;
       nameSpan.innerText = ch.name;
-      topRow.appendChild(nameSpan);
-      card.appendChild(topRow);
-
-      if (ch.tags && ch.tags.length > 0) {
-        const tagsWrap = document.createElement('div');
-        tagsWrap.className = 'flex flex-wrap gap-1';
-        ch.tags.forEach(tagId => {
-          const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
-          if (tagObj) {
-            const badge = document.createElement('span');
-            badge.className = `text-[10px] px-1.5 py-0.5 rounded border font-medium leading-none ${tagObj.color}`;
-            badge.innerText = tagObj.label;
-            tagsWrap.appendChild(badge);
-          }
-        });
-        card.appendChild(tagsWrap);
-      }
+      card.appendChild(nameSpan);
 
       return card;
     }
@@ -652,14 +635,14 @@
         imgEl.classList.add('hidden');
       }
 
+      // Configurar botón de redirección externa a YouTube
       const videoSection = document.getElementById('detailVideoSection');
-      const iframe = document.getElementById('detailYoutubeIframe');
-      const embedUrl = getYoutubeEmbedUrl(ch.youtube);
-      if (embedUrl) {
-        iframe.src = embedUrl;
+      const ytBtn = document.getElementById('detailYoutubeBtn');
+      if (ch.youtube && ch.youtube.trim() !== "") {
+        ytBtn.href = ch.youtube;
         videoSection.classList.remove('hidden');
       } else {
-        iframe.src = '';
+        ytBtn.href = "#";
         videoSection.classList.add('hidden');
       }
 
@@ -687,16 +670,8 @@
     }
 
     function closeDetailModal() {
-      document.getElementById('detailYoutubeIframe').src = '';
       document.getElementById('detailModal').classList.add('hidden');
       document.getElementById('detailModal').classList.remove('flex');
-    }
-
-    function getYoutubeEmbedUrl(url) {
-      if (!url) return null;
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
-      const match = url.match(regExp);
-      return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
     }
 
     initData();
