@@ -52,11 +52,17 @@
     </div>
   </header>
 
-  <!-- BARRA DE FILTROS DE ETIQUETAS -->
-  <section class="bg-gray-900/60 border-b border-gray-800/80 px-6 py-3">
+  <!-- BARRAS DE FILTROS SUPERIORES -->
+  <section class="bg-gray-900/80 border-b border-gray-800 px-6 py-3 space-y-2.5">
+    <!-- Filtro de Etiquetas de TIER LIST -->
     <div class="flex flex-wrap items-center gap-2">
-      <span class="text-xs font-bold uppercase tracking-wider text-gray-400 mr-1">Filtrar por etiquetas (coincidentes):</span>
-      <div id="filterBar" class="flex flex-wrap gap-1.5"></div>
+      <span class="text-xs font-bold uppercase tracking-wider text-purple-400 mr-1">Filtro Etiquetas TIER LIST:</span>
+      <div id="filterBarTier" class="flex flex-wrap gap-1.5"></div>
+    </div>
+    <!-- Filtro de Etiquetas del Juego -->
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-bold uppercase tracking-wider text-sky-400 mr-1">Filtro Etiquetas del Juego:</span>
+      <div id="filterBarGame" class="flex flex-wrap gap-1.5"></div>
       <button id="btnClearFilters" onclick="clearFilters()" class="hidden text-xs text-red-400 hover:text-red-300 underline ml-2">
         Limpiar filtros
       </button>
@@ -69,10 +75,8 @@
       <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto"></div>
     </main>
 
-    <!-- MENÚ LATERAL DERECHO ADMIN (CON 3 SECCIONES) -->
+    <!-- MENÚ LATERAL DERECHO ADMIN -->
     <aside id="sidebarBench" class="w-80 bg-gray-900 border-l border-gray-800 p-4 flex flex-col hidden space-y-4 overflow-y-auto">
-      
-      <!-- 1. Nuevos Personajes -->
       <div class="flex flex-col">
         <div class="mb-1.5 flex items-center justify-between">
           <span class="text-xs font-bold text-white">📥 Nuevos Personajes</span>
@@ -81,7 +85,6 @@
         <div id="benchDropZone1" data-tier="BENCH" data-clase="ALL" data-sub="bench1" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
       </div>
 
-      <!-- 2. Nuevas Ascension+ -->
       <div class="flex flex-col">
         <div class="mb-1.5 flex items-center justify-between">
           <span class="text-xs font-bold text-white">⬆️ Nuevas Ascension+</span>
@@ -90,7 +93,6 @@
         <div id="benchDropZone2" data-tier="BENCH" data-clase="ALL" data-sub="bench2" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
       </div>
 
-      <!-- 3. Nuevos 7 Estrellas -->
       <div class="flex flex-col">
         <div class="mb-1.5 flex items-center justify-between">
           <span class="text-xs font-bold text-white">💜 Nuevos 7 Estrellas</span>
@@ -98,7 +100,6 @@
         </div>
         <div id="benchDropZone3" data-tier="BENCH" data-clase="ALL" data-sub="bench3" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
       </div>
-
     </aside>
   </div>
 
@@ -131,7 +132,7 @@
 
   <!-- MODAL CREAR / EDITAR PERSONAJE -->
   <div id="formModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 id="formModalTitle" class="text-lg font-bold text-white">Añadir Personaje</h3>
         <button onclick="closeFormModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
@@ -162,9 +163,16 @@
           </div>
         </div>
 
+        <!-- 1. Etiquetas de TIER LIST -->
         <div>
-          <label class="block text-gray-300 mb-1.5 font-medium">Etiquetas Oficiales (Leyenda MCOC)</label>
-          <div id="formTagsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-950/70 p-3 rounded-xl border border-gray-800 max-h-56 overflow-y-auto"></div>
+          <label class="block text-gray-300 mb-1.5 font-medium text-purple-400">Etiquetas de TIER LIST</label>
+          <div id="formTierTagsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-950/70 p-3 rounded-xl border border-gray-800 max-h-40 overflow-y-auto"></div>
+        </div>
+
+        <!-- 2. Etiquetas del Juego por Grupos -->
+        <div>
+          <label class="block text-gray-300 mb-1.5 font-medium text-sky-400">Etiquetas del Juego (por Grupos)</label>
+          <div id="formGameTagsContainer" class="space-y-3 bg-gray-950/70 p-3 rounded-xl border border-gray-800 max-h-60 overflow-y-auto"></div>
         </div>
 
         <div>
@@ -185,7 +193,7 @@
     </div>
   </div>
 
-  <!-- MODAL DETALLE + BOTÓN REDIRECCIÓN YOUTUBE -->
+  <!-- MODAL DETALLE DE PERSONAJE -->
   <div id="detailModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl">
       <div class="p-5 border-b border-gray-800 flex justify-between items-start">
@@ -200,13 +208,20 @@
       </div>
 
       <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        <!-- Etiquetas de Tier List en la ficha -->
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Etiquetas del Personaje</h4>
-          <div id="detailTags" class="flex flex-wrap gap-1.5"></div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Etiquetas de Tier List</h4>
+          <div id="detailTierTags" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- Etiquetas del Juego agrupadas en la ficha -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-2">Etiquetas del Juego</h4>
+          <div id="detailGameTags" class="space-y-2"></div>
         </div>
 
         <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1.5">Características y Análisis</h4>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1.5">Características y Análisis</h4>
           <p id="detailNotes" class="text-gray-200 text-sm whitespace-pre-line bg-gray-950/70 p-3.5 rounded-xl border border-gray-800"></p>
         </div>
 
@@ -245,7 +260,8 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    const AVAILABLE_TAGS = [
+    // 1. ETIQUETAS DE TIER LIST (Las que muestran emoji en la tarjeta y sirven para filtrar en el tablero)
+    const TIER_TAGS = [
       { id: 'asc7',       label: '⬆️ Ascensión 7 Estrellas', emoji: '⬆️', color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
       { id: 'gbasico',    label: '💜 7 Estrellas Grupo Básico', emoji: '💜', color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
       { id: 'gtitan',     label: '💚 7 Estrellas Cristal Titán', emoji: '💚', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
@@ -267,6 +283,19 @@
       { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', emoji: '🔴', color: 'bg-red-900/80 text-red-200 border-red-600' }
     ];
 
+    // 2. GRUPOS DE ETIQUETAS DEL JUEGO
+    const GAME_TAG_GROUPS = [
+      "SAGA",
+      "ESTILO DE COMBATE",
+      "ATRIBUTOS",
+      "ORGANIZACION",
+      "GUERRAS DE ALIANZA",
+      "DESAFIOS DE CARINA",
+      "GESTAS DE ALIANZA",
+      "FECHA DE LANZAMIENTO",
+      "FORMADOR DE ESCUADRON"
+    ];
+
     const TIERS = [
       { id: 'GOAT',        name: 'GOAT TIER',        color: 'from-amber-400 via-yellow-500 to-amber-600 text-black border-yellow-400' },
       { id: 'GOD',         name: 'GOD TIER',         color: 'from-purple-600 via-indigo-600 to-purple-700 text-white border-purple-500' },
@@ -286,7 +315,8 @@
     ];
 
     let characters = [];
-    let activeFilters = [];
+    let activeTierFilters = [];
+    let activeGameFilters = [];
     let isAdmin = false;
     let sortableInstances = [];
 
@@ -378,8 +408,8 @@
     // CARGA Y GUARDADO DE DATOS
     // =========================================================================
     function initData() {
-      renderFilterBar();
-      renderFormTagCheckboxes();
+      renderFilterBars();
+      renderFormTagInputs();
 
       db.collection('tierlist').doc('main').onSnapshot(doc => {
         if (doc.exists && doc.data().characters) {
@@ -387,6 +417,7 @@
         } else {
           characters = [];
         }
+        renderFilterBars(); // Actualizar sugerencias de etiquetas del juego existentes
         renderBoard();
       }, () => {
         characters = [];
@@ -438,7 +469,7 @@
           cell.dataset.tier = tier.id;
           cell.dataset.clase = cl.id;
 
-          const cellChars = characters.filter(c => c.tier === tier.id && c.clase === cl.id && matchesActiveFilters(c));
+          const cellChars = characters.filter(c => c.tier === tier.id && c.clase === cl.id && matchesFilters(c));
           cellChars.forEach(ch => cell.appendChild(createCharCard(ch)));
 
           columnsGrid.appendChild(cell);
@@ -456,9 +487,9 @@
       bench2.innerHTML = '';
       bench3.innerHTML = '';
 
-      const benchChars1 = characters.filter(c => (!c.subBench || c.subBench === 'bench1') && c.tier === 'BENCH' && matchesActiveFilters(c));
-      const benchChars2 = characters.filter(c => c.subBench === 'bench2' && c.tier === 'BENCH' && matchesActiveFilters(c));
-      const benchChars3 = characters.filter(c => c.subBench === 'bench3' && c.tier === 'BENCH' && matchesActiveFilters(c));
+      const benchChars1 = characters.filter(c => (!c.subBench || c.subBench === 'bench1') && c.tier === 'BENCH' && matchesFilters(c));
+      const benchChars2 = characters.filter(c => c.subBench === 'bench2' && c.tier === 'BENCH' && matchesFilters(c));
+      const benchChars3 = characters.filter(c => c.subBench === 'bench3' && c.tier === 'BENCH' && matchesFilters(c));
 
       benchChars1.forEach(ch => bench1.appendChild(createCharCard(ch)));
       benchChars2.forEach(ch => bench2.appendChild(createCharCard(ch)));
@@ -473,7 +504,6 @@
 
     function createCharCard(ch) {
       const card = document.createElement('div');
-      // Tarjeta más delgada con padding vertical y horizontal ajustado
       card.className = `char-card clase-${ch.clase} rounded-md px-2 py-1.5 text-xs flex items-center justify-between gap-1.5 bg-gray-900 shadow-sm border border-gray-800/80`;
       card.dataset.id = ch.id;
       card.onclick = () => openDetailModal(ch.id);
@@ -491,7 +521,6 @@
       const nameSpan = document.createElement('span');
       const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
       
-      // Tamaño de fuente adaptable (más pequeño para nombres largos) para evitar que salte de línea
       const nameLength = ch.name ? ch.name.length : 0;
       let textSize = 'text-[11px]';
       if (nameLength > 12) textSize = 'text-[10px]';
@@ -502,12 +531,12 @@
       left.appendChild(nameSpan);
       card.appendChild(left);
 
-      // Emojis de etiquetas en la misma línea
-      if (ch.tags && ch.tags.length > 0) {
+      // Mostrar solo emojis de las Etiquetas de TIER LIST en la tarjeta principal
+      if (ch.tierTags && ch.tierTags.length > 0) {
         const emojisWrap = document.createElement('div');
         emojisWrap.className = 'flex items-center gap-0.5 flex-shrink-0';
-        ch.tags.forEach(tagId => {
-          const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
+        ch.tierTags.forEach(tagId => {
+          const tagObj = TIER_TAGS.find(t => t.id === tagId);
           if (tagObj) {
             const emojiSpan = document.createElement('span');
             emojiSpan.className = 'text-[11px] leading-none';
@@ -522,42 +551,90 @@
     }
 
     // =========================================================================
-    // FILTROS Y DRAG & DROP
+    // FILTROS (TIER LIST Y JUEGO)
     // =========================================================================
-    function renderFilterBar() {
-      const bar = document.getElementById('filterBar');
-      bar.innerHTML = '';
-
-      AVAILABLE_TAGS.forEach(tag => {
-        const isSelected = activeFilters.includes(tag.id);
+    function renderFilterBars() {
+      // 1. Barra de Tier List
+      const barTier = document.getElementById('filterBarTier');
+      barTier.innerHTML = '';
+      TIER_TAGS.forEach(tag => {
+        const isSelected = activeTierFilters.includes(tag.id);
         const btn = document.createElement('button');
-        btn.className = `text-xs px-2.5 py-1 rounded-md border font-medium transition ${tag.color} ${isSelected ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-90'}`;
+        btn.className = `text-xs px-2 py-0.5 rounded-md border font-medium transition ${tag.color} ${isSelected ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-90'}`;
         btn.innerText = tag.label;
         btn.onclick = () => {
-          if (activeFilters.includes(tag.id)) {
-            activeFilters = activeFilters.filter(id => id !== tag.id);
+          if (activeTierFilters.includes(tag.id)) {
+            activeTierFilters = activeTierFilters.filter(id => id !== tag.id);
           } else {
-            activeFilters.push(tag.id);
+            activeTierFilters.push(tag.id);
           }
-          renderFilterBar();
+          renderFilterBars();
           renderBoard();
         };
-        bar.appendChild(btn);
+        barTier.appendChild(btn);
       });
 
-      document.getElementById('btnClearFilters').classList.toggle('hidden', activeFilters.length === 0);
+      // 2. Barra de Etiquetas del Juego (recolectar todas las existentes)
+      const barGame = document.getElementById('filterBarGame');
+      barGame.innerHTML = '';
+      
+      const existingGameTags = new Set();
+      characters.forEach(c => {
+        if (c.gameTags) {
+          Object.values(c.gameTags).forEach(tagList => {
+            if (Array.isArray(tagList)) tagList.forEach(t => existingGameTags.add(t));
+          });
+        }
+      });
+
+      if (existingGameTags.size === 0) {
+        barGame.innerHTML = '<span class="text-xs text-gray-500 italic">No hay etiquetas del juego creadas aún.</span>';
+      } else {
+        existingGameTags.forEach(tagName => {
+          const isSelected = activeGameFilters.includes(tagName);
+          const btn = document.createElement('button');
+          btn.className = `text-xs px-2 py-0.5 rounded-md border font-medium bg-sky-950/80 text-sky-300 border-sky-700/80 transition ${isSelected ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-90'}`;
+          btn.innerText = tagName;
+          btn.onclick = () => {
+            if (activeGameFilters.includes(tagName)) {
+              activeGameFilters = activeGameFilters.filter(t => t !== tagName);
+            } else {
+              activeGameFilters.push(tagName);
+            }
+            renderFilterBars();
+            renderBoard();
+          };
+          barGame.appendChild(btn);
+        });
+      }
+
+      const hasActive = activeTierFilters.length > 0 || activeGameFilters.length > 0;
+      document.getElementById('btnClearFilters').classList.toggle('hidden', !hasActive);
     }
 
     function clearFilters() {
-      activeFilters = [];
-      renderFilterBar();
+      activeTierFilters = [];
+      activeGameFilters = [];
+      renderFilterBars();
       renderBoard();
     }
 
-    function matchesActiveFilters(char) {
-      if (activeFilters.length === 0) return true;
-      const charTags = char.tags || [];
-      return activeFilters.every(filterId => charTags.includes(filterId));
+    function matchesFilters(char) {
+      const charTierTags = char.tierTags || [];
+      const matchTier = activeTierFilters.every(f => charTierTags.includes(f));
+
+      let matchGame = true;
+      if (activeGameFilters.length > 0 && char.gameTags) {
+        const allCharGameTags = [];
+        Object.values(char.gameTags).forEach(list => {
+          if (Array.isArray(list)) allCharGameTags.push(...list);
+        });
+        matchGame = activeGameFilters.every(f => allCharGameTags.includes(f));
+      } else if (activeGameFilters.length > 0) {
+        matchGame = false;
+      }
+
+      return matchTier && matchGame;
     }
 
     function initDragAndDrop() {
@@ -603,22 +680,99 @@
     }
 
     // =========================================================================
-    // MODALES
+    // MODALES (CREAR / EDITAR)
     // =========================================================================
-    function renderFormTagCheckboxes() {
-      const container = document.getElementById('formTagsContainer');
-      container.innerHTML = '';
-      AVAILABLE_TAGS.forEach(tag => {
+    function renderFormTagInputs() {
+      // 1. Renderizar checkboxes de Tier List
+      const tierContainer = document.getElementById('formTierTagsContainer');
+      tierContainer.innerHTML = '';
+      TIER_TAGS.forEach(tag => {
         const label = document.createElement('label');
         label.className = 'flex items-center gap-2 cursor-pointer text-xs text-gray-300';
-        label.innerHTML = `<input type="checkbox" value="${tag.id}" class="char-tag-cb rounded bg-gray-800 border-gray-700"> <span class="px-1.5 py-0.5 rounded border text-[11px] ${tag.color}">${tag.label}</span>`;
-        container.appendChild(label);
+        label.innerHTML = `<input type="checkbox" value="${tag.id}" class="tier-tag-cb rounded bg-gray-800 border-gray-700"> <span class="px-1.5 py-0.5 rounded border text-[11px] ${tag.color}">${tag.label}</span>`;
+        tierContainer.appendChild(label);
       });
+
+      // 2. Renderizar grupos de Etiquetas del Juego
+      const gameContainer = document.getElementById('formGameTagsContainer');
+      gameContainer.innerHTML = '';
+
+      // Recopilar etiquetas existentes por grupo para sugerencias
+      const existingTagsByGroup = {};
+      GAME_TAG_GROUPS.forEach(g => existingTagsByGroup[g] = new Set());
+      characters.forEach(c => {
+        if (c.gameTags) {
+          Object.keys(c.gameTags).forEach(groupName => {
+            if (existingTagsByGroup[groupName] && Array.isArray(c.gameTags[groupName])) {
+              c.gameTags[groupName].forEach(t => existingTagsByGroup[groupName].add(t));
+            }
+          });
+        }
+      });
+
+      GAME_TAG_GROUPS.forEach(groupName => {
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'bg-gray-900 p-2.5 rounded-lg border border-gray-800 space-y-1.5';
+        
+        const title = document.createElement('span');
+        title.className = 'text-xs font-bold text-sky-400 uppercase tracking-wider block';
+        title.innerText = groupName;
+        groupDiv.appendChild(title);
+
+        const listDiv = document.createElement('div');
+        listDiv.className = 'flex flex-wrap gap-1.5 game-group-checkboxes';
+        listDiv.dataset.group = groupName;
+
+        const groupTags = existingTagsByGroup[groupName];
+        if (groupTags.size > 0) {
+          groupTags.forEach(tagName => {
+            const lbl = document.createElement('label');
+            lbl.className = 'flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 bg-gray-800 px-2 py-1 rounded border border-gray-700';
+            lbl.innerHTML = `<input type="checkbox" value="${tagName}" class="game-tag-cb rounded bg-gray-900 border-gray-700"> <span>${tagName}</span>`;
+            listDiv.appendChild(lbl);
+          });
+        } else {
+          listDiv.innerHTML = '<span class="text-[11px] text-gray-500 italic">No hay etiquetas creadas en este grupo aún.</span>';
+        }
+        groupDiv.appendChild(listDiv);
+
+        // Input para crear nueva etiqueta en este grupo
+        const inputRow = document.createElement('div');
+        inputRow.className = 'flex gap-2 pt-1';
+        inputRow.innerHTML = `
+          <input type="text" placeholder="+ Nueva etiqueta para ${groupName}" class="new-game-tag-input flex-1 bg-gray-950 border border-gray-700 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-sky-500">
+          <button type="button" onclick="addNewTagToGroup(this, '${groupName}')" class="bg-sky-700 hover:bg-sky-600 text-white text-xs px-2.5 py-1 rounded font-medium">Añadir</button>
+        `;
+        groupDiv.appendChild(inputRow);
+
+        gameContainer.appendChild(groupDiv);
+      });
+    }
+
+    function addNewTagToGroup(btn, groupName) {
+      const input = btn.previousElementSibling;
+      const tagName = input.value.trim();
+      if (!tagName) return;
+
+      const listDiv = btn.closest('div.bg-gray-900').querySelector('.game-group-checkboxes');
+      // Si decía que no había etiquetas, limpiar
+      if (listDiv.querySelector('span.italic')) listDiv.innerHTML = '';
+
+      // Evitar duplicados visuales
+      const existing = Array.from(listDiv.querySelectorAll('input')).map(i => i.value);
+      if (!existing.includes(tagName)) {
+        const lbl = document.createElement('label');
+        lbl.className = 'flex items-center gap-1.5 cursor-pointer text-xs text-gray-300 bg-gray-800 px-2 py-1 rounded border border-gray-700';
+        lbl.innerHTML = `<input type="checkbox" value="${tagName}" checked class="game-tag-cb rounded bg-gray-900 border-gray-700"> <span>${tagName}</span>`;
+        listDiv.appendChild(lbl);
+      }
+      input.value = '';
     }
 
     function openFormModal(editId = null) {
       document.getElementById('charForm').reset();
       document.getElementById('editCharId').value = editId || '';
+      renderFormTagInputs(); // Refrescar lista de etiquetas guardadas
       
       if (editId) {
         const ch = characters.find(c => c.id === editId);
@@ -629,9 +783,22 @@
         document.getElementById('charImg').value = ch.img || '';
         document.getElementById('charNotes').value = ch.notes || '';
         document.getElementById('charYoutube').value = ch.youtube || '';
-        document.querySelectorAll('.char-tag-cb').forEach(cb => {
-          cb.checked = (ch.tags || []).includes(cb.value);
+        
+        // Marcar Tier Tags
+        document.querySelectorAll('.tier-tag-cb').forEach(cb => {
+          cb.checked = (ch.tierTags || []).includes(cb.value);
         });
+
+        // Marcar Game Tags
+        if (ch.gameTags) {
+          document.querySelectorAll('.game-group-checkboxes').forEach(groupDiv => {
+            const groupName = groupDiv.dataset.group;
+            const assignedList = ch.gameTags[groupName] || [];
+            groupDiv.querySelectorAll('.game-tag-cb').forEach(cb => {
+              cb.checked = assignedList.includes(cb.value);
+            });
+          });
+        }
       } else {
         document.getElementById('formModalTitle').innerText = 'Añadir Nuevo Personaje';
       }
@@ -653,12 +820,24 @@
       const img = document.getElementById('charImg').value.trim();
       const notes = document.getElementById('charNotes').value.trim();
       const youtube = document.getElementById('charYoutube').value.trim();
-      const selectedTags = Array.from(document.querySelectorAll('.char-tag-cb:checked')).map(cb => cb.value);
+      
+      // Recoger Tier Tags
+      const selectedTierTags = Array.from(document.querySelectorAll('.tier-tag-cb:checked')).map(cb => cb.value);
+
+      // Recoger Game Tags por Grupo
+      const gameTagsObj = {};
+      document.querySelectorAll('.game-group-checkboxes').forEach(groupDiv => {
+        const groupName = groupDiv.dataset.group;
+        const checkedInGroup = Array.from(groupDiv.querySelectorAll('.game-tag-cb:checked')).map(cb => cb.value);
+        if (checkedInGroup.length > 0) {
+          gameTagsObj[groupName] = checkedInGroup;
+        }
+      });
 
       if (editId) {
         const idx = characters.findIndex(c => c.id === editId);
         if (idx > -1) {
-          characters[idx] = { ...characters[idx], name, clase, img, notes, youtube, tags: selectedTags };
+          characters[idx] = { ...characters[idx], name, clase, img, notes, youtube, tierTags: selectedTierTags, gameTags: gameTagsObj };
         }
       } else {
         characters.push({
@@ -667,7 +846,8 @@
           clase,
           tier: 'BENCH',
           subBench: 'bench1',
-          tags: selectedTags,
+          tierTags: selectedTierTags,
+          gameTags: gameTagsObj,
           notes,
           youtube,
           img
@@ -676,6 +856,7 @@
 
       persistChanges();
       closeFormModal();
+      renderFilterBars();
       renderBoard();
     }
 
@@ -687,17 +868,54 @@
       document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
       document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
 
-      const tagsContainer = document.getElementById('detailTags');
-      tagsContainer.innerHTML = '';
-      (ch.tags || []).forEach(tagId => {
-        const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
-        if (tagObj) {
-          const span = document.createElement('span');
-          span.className = `text-xs px-2.5 py-1 rounded-md border font-medium ${tagObj.color}`;
-          span.innerText = tagObj.label;
-          tagsContainer.appendChild(span);
-        }
-      });
+      // 1. Renderizar Etiquetas de Tier List en la ficha
+      const tierTagsContainer = document.getElementById('detailTierTags');
+      tierTagsContainer.innerHTML = '';
+      if (ch.tierTags && ch.tierTags.length > 0) {
+        ch.tierTags.forEach(tagId => {
+          const tagObj = TIER_TAGS.find(t => t.id === tagId);
+          if (tagObj) {
+            const span = document.createElement('span');
+            span.className = `text-xs px-2.5 py-1 rounded-md border font-medium ${tagObj.color}`;
+            span.innerText = tagObj.label;
+            tierTagsContainer.appendChild(span);
+          }
+        });
+      } else {
+        tierTagsContainer.innerHTML = '<span class="text-xs text-gray-500 italic">Sin etiquetas de Tier List.</span>';
+      }
+
+      // 2. Renderizar Etiquetas del Juego agrupadas en la ficha
+      const gameTagsContainer = document.getElementById('detailGameTags');
+      gameTagsContainer.innerHTML = '';
+      if (ch.gameTags && Object.keys(ch.gameTags).length > 0) {
+        Object.keys(ch.gameTags).forEach(groupName => {
+          const tagList = ch.gameTags[groupName];
+          if (Array.isArray(tagList) && tagList.length > 0) {
+            const groupBlock = document.createElement('div');
+            groupBlock.className = 'bg-gray-950/60 p-2.5 rounded-lg border border-gray-800 space-y-1.5';
+            
+            const gTitle = document.createElement('span');
+            gTitle.className = 'text-[11px] font-bold text-sky-400 uppercase tracking-wider block';
+            gTitle.innerText = groupName;
+            groupBlock.appendChild(gTitle);
+
+            const pillsWrap = document.createElement('div');
+            pillsWrap.className = 'flex flex-wrap gap-1.5';
+            tagList.forEach(tagName => {
+              const pill = document.createElement('span');
+              pill.className = 'text-xs px-2 py-0.5 rounded bg-sky-950/80 text-sky-300 border border-sky-800/60 font-medium';
+              pill.innerText = tagName;
+              pillsWrap.appendChild(pill);
+            });
+            groupBlock.appendChild(pillsWrap);
+            gameTagsContainer.appendChild(groupBlock);
+          }
+        });
+      }
+      if (gameTagsContainer.innerHTML === '') {
+        gameTagsContainer.innerHTML = '<span class="text-xs text-gray-500 italic">Sin etiquetas del juego asignadas.</span>';
+      }
 
       const imgEl = document.getElementById('detailImg');
       if (ch.img) {
@@ -729,6 +947,7 @@
             characters = characters.filter(item => item.id !== ch.id);
             persistChanges();
             closeDetailModal();
+            renderFilterBars();
             renderBoard();
           }
         };
