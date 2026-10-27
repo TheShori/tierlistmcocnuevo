@@ -6,6 +6,12 @@
   <title>Tier List MCOC - TheShori</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  
+  <!-- Firebase SDKs (Google Auth + Firestore Database en tiempo real) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
   <style>
     body { background-color: #0b0c10; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
     
@@ -19,9 +25,8 @@
 
     .char-card { transition: transform 0.12s ease, box-shadow 0.12s ease; cursor: pointer; user-select: none; }
     .char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65); }
-    .drop-zone { min-height: 115px; }
+    .drop-zone { min-height: 120px; }
     .sortable-ghost { opacity: 0.35; border: 2px dashed #a855f7; }
-    .filter-btn.active { ring: 2px solid white; transform: scale(1.03); }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -33,25 +38,30 @@
         MCOC TIER LIST
       </span>
       <span id="statusBadge" class="text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
-        Modo Visitante
+        Conectando...
       </span>
     </div>
 
     <div class="flex items-center gap-2.5">
-      <!-- Botones exclusivos Admin -->
+      <!-- Botón Añadir Personaje (Solo visible cuando entras con thesoriplayer@gmail.com) -->
       <button id="btnAddChar" onclick="openFormModal()" class="hidden bg-purple-600 hover:bg-purple-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs md:text-sm transition">
         + Añadir Personaje
       </button>
-      <button id="btnSaveGithub" onclick="saveToGitHub()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs md:text-sm transition">
-        💾 Guardar en GitHub
-      </button>
-      <button id="btnAdminToggle" onclick="openAdminModal()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition">
-        🔒 Admin
+
+      <!-- Botón Login con Google -->
+      <button id="btnGoogleLogin" onclick="handleAuthClick()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24">
+          <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.7 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+          <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+          <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+          <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 20.9 7.4 24 12 24z"/>
+        </svg>
+        <span id="authBtnText">Iniciar sesión Admin</span>
       </button>
     </div>
   </header>
 
-  <!-- BARRA DE FILTROS DE ETIQUETAS (ACUMULATIVOS / COINCIDENTES) -->
+  <!-- BARRA DE FILTROS DE ETIQUETAS COINCIDENTES -->
   <section class="bg-gray-900/60 border-b border-gray-800/80 px-6 py-3">
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-xs font-bold uppercase tracking-wider text-gray-400 mr-1">Filtrar por etiquetas (coincidentes):</span>
@@ -65,21 +75,9 @@
   <!-- CONTENEDOR PRINCIPAL -->
   <div class="flex flex-1 overflow-hidden">
     
-    <!-- TABLA DE TIERS -->
+    <!-- ZONA DE TIERS (Con el nombre del TIER arriba y las 6 clases debajo) -->
     <main class="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-auto">
-      <!-- Cabecera Clases -->
-      <div class="grid grid-cols-7 gap-2.5 mb-2.5 min-w-[1050px] text-center font-bold text-xs md:text-sm uppercase tracking-wider">
-        <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 flex items-center justify-center text-gray-400">TIER</div>
-        <div class="bg-yellow-950/40 text-yellow-400 p-2.5 rounded-lg border border-yellow-700/50">Mutantes</div>
-        <div class="bg-red-950/40 text-red-400 p-2.5 rounded-lg border border-red-700/50">Hábiles</div>
-        <div class="bg-green-950/40 text-green-400 p-2.5 rounded-lg border border-green-700/50">Científicos</div>
-        <div class="bg-purple-950/40 text-purple-400 p-2.5 rounded-lg border border-purple-700/50">Místicos</div>
-        <div class="bg-sky-950/40 text-sky-400 p-2.5 rounded-lg border border-sky-700/50">Cósmicos</div>
-        <div class="bg-blue-950/40 text-blue-400 p-2.5 rounded-lg border border-blue-700/50">Tecnológicos</div>
-      </div>
-
-      <!-- Filas dinámicas de Tiers -->
-      <div id="tiersContainer" class="space-y-3 min-w-[1050px]"></div>
+      <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto"></div>
     </main>
 
     <!-- MENÚ DERECHO: BANQUILLO DE PERSONAJES NUEVOS (SOLO ADMIN) -->
@@ -89,7 +87,7 @@
           <span>📥 Nuevos / Sin Clasificar</span>
           <span id="benchCount" class="bg-purple-600 text-xs px-2 py-0.5 rounded-full">0</span>
         </h2>
-        <p class="text-xs text-gray-400 mt-1">Arrastra los personajes nuevos desde aquí a su Tier correspondiente.</p>
+        <p class="text-xs text-gray-400 mt-1">Arrastra los personajes nuevos desde aquí a su Tier y Clase correspondiente.</p>
       </div>
       <div id="benchDropZone" data-tier="BENCH" data-clase="ALL" class="drop-zone flex-1 bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2.5 space-y-2 overflow-y-auto"></div>
     </aside>
@@ -191,39 +189,28 @@
     </div>
   </div>
 
-  <!-- MODAL 3: CONEXIÓN ADMIN CON GITHUB -->
-  <div id="adminModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-sm">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-bold text-white">Acceso Administrador (GitHub)</h3>
-        <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
-      </div>
-      <p class="text-xs text-gray-400">Introduce los datos de tu repositorio para desbloquear el modo edición y guardar los cambios directamente en GitHub Pages.</p>
-      
-      <div>
-        <label class="block text-gray-300 mb-1">Usuario de GitHub</label>
-        <input type="text" id="ghOwner" placeholder="Ej: TheShori" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
-      </div>
-      <div>
-        <label class="block text-gray-300 mb-1">Nombre del Repositorio</label>
-        <input type="text" id="ghRepo" placeholder="Ej: mcoc-tierlist" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
-      </div>
-      <div>
-        <label class="block text-gray-300 mb-1">GitHub Personal Access Token (PAT)</label>
-        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
-      </div>
-
-      <div class="flex justify-end gap-2 pt-2">
-        <button onclick="closeAdminModal()" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-300">Cancelar</button>
-        <button onclick="activateAdmin()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold">Desbloquear Admin</button>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // ==========================================
-    // 1. CONFIGURACIÓN DE ETIQUETAS (BADGES)
-    // ==========================================
+    // =========================================================================
+    // 1. CONFIGURACIÓN DE ADMIN POR GOOGLE Y FIREBASE (YA CONECTADO)
+    // =========================================================================
+    const ADMIN_EMAIL = "thesoriplayer@gmail.com";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBadVGulkyDSHjSWbkDAjtYRfyefQBea6A",
+      authDomain: "tier-list-nuevo.firebaseapp.com",
+      projectId: "tier-list-nuevo",
+      storageBucket: "tier-list-nuevo.firebasestorage.app",
+      messagingSenderId: "1031884662220",
+      appId: "1:1031884662220:web:2767dfa2a5880e5a902969"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // =========================================================================
+    // 2. CONFIGURACIÓN DE ETIQUETAS, TIERS Y CLASES
+    // =========================================================================
     const AVAILABLE_TAGS = [
       { id: 'top7',      label: 'Top 7★',        color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
       { id: 'exclusivo', label: 'Exclusivo',     color: 'bg-gray-800 text-gray-200 border-gray-600' },
@@ -238,138 +225,203 @@
     ];
 
     const TIERS = [
-      { id: 'GOAT', name: 'GOAT TIER', color: 'from-amber-400 to-yellow-600 text-black' },
-      { id: 'GOD', name: 'GOD TIER', color: 'from-purple-600 to-indigo-600 text-white' },
-      { id: 'DEMIGOD', name: 'DEMI-GOD', color: 'from-blue-600 to-cyan-600 text-white' },
-      { id: 'UTILITY', name: 'MUY ÚTILES', color: 'from-emerald-600 to-teal-600 text-white' }
+      { id: 'GOAT',    name: 'GOAT TIER',  color: 'from-amber-400 via-yellow-500 to-amber-600 text-black border-yellow-400' },
+      { id: 'GOD',     name: 'GOD TIER',   color: 'from-purple-600 via-indigo-600 to-purple-700 text-white border-purple-500' },
+      { id: 'DEMIGOD', name: 'DEMI-GOD',   color: 'from-blue-600 via-cyan-600 to-blue-700 text-white border-cyan-500' },
+      { id: 'UTILITY', name: 'MUY ÚTILES', color: 'from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-500' }
     ];
 
-    const CLASES = ['Mutante', 'Habil', 'Cientifico', 'Mistico', 'Cosmico', 'Tecnologico'];
+    const CLASES = [
+      { id: 'Mutante',     label: 'MUTANTES',     headerStyle: 'bg-yellow-950/40 text-yellow-400 border-yellow-700/50' },
+      { id: 'Habil',       label: 'HÁBILES',      headerStyle: 'bg-red-950/40 text-red-400 border-red-700/50' },
+      { id: 'Cientifico',  label: 'CIENTÍFICOS',  headerStyle: 'bg-green-950/40 text-green-400 border-green-700/50' },
+      { id: 'Mistico',     label: 'MÍSTICOS',     headerStyle: 'bg-purple-950/40 text-purple-400 border-purple-700/50' },
+      { id: 'Cosmico',     label: 'CÓSMICOS',     headerStyle: 'bg-sky-950/40 text-sky-400 border-sky-700/50' },
+      { id: 'Tecnologico', label: 'TECNOLÓGICOS', headerStyle: 'bg-blue-950/40 text-blue-400 border-blue-700/50' }
+    ];
 
-    // Datos iniciales migrados de tu Excel con el nuevo sistema de etiquetas
+    // Todos los personajes de tu GOAT TIER listos de serie
     const DEFAULT_CHARACTERS = [
+      // Mutantes
       { id: 'c1', name: 'Onslaught', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'defensor'], notes: 'Dominante en ataque y defensa. Daño de neurochoque brutal.', youtube: '', img: '' },
       { id: 'c2', name: 'Capitana Britania', clase: 'Mutante', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
       { id: 'c3', name: 'Jean Grey', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'defensor'], notes: '', youtube: '', img: '' },
       { id: 'c4', name: 'Mister Siniestro', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'inmunidad', 'defensor'], notes: '', youtube: '', img: '' },
       { id: 'c5', name: 'Kitty Pride', clase: 'Mutante', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'inmunidad'], notes: '', youtube: '', img: '' },
+      // Hábiles
       { id: 'c6', name: 'Okoye', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica'], notes: '', youtube: '', img: '' },
       { id: 'c7', name: 'Doctor Bong', clase: 'Habil', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
       { id: 'c8', name: 'Kingpin', clase: 'Habil', tier: 'GOAT', tags: ['duplica', 'inmunidad', 'defensor'], notes: '', youtube: '', img: '' },
       { id: 'c9', name: 'Lumatrix', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica', 'reliquia', 'rotacion', 'defensor'], notes: '', youtube: '', img: '' },
       { id: 'c10', name: 'Nick Fury', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c11', name: 'Spider-Woman', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
-      { id: 'c12', name: 'Conde Nefaria', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c13', name: 'Escorpión', clase: 'Cientifico', tier: 'GOAT', tags: ['sinergia', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c14', name: 'Kushala', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c15', name: 'Nico Minoru', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c16', name: 'Serpiente', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c17', name: 'Hulkling', clase: 'Cosmico', tier: 'GOAT', tags: ['duplica', 'altasing', 'rotacion', 'defensor'], notes: '', youtube: '', img: '' }
+      { id: 'c11', name: 'Black Tarantula', clase: 'Habil', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'reliquia'], notes: '', youtube: '', img: '' },
+      // Científicos
+      { id: 'c12', name: 'Spider-Woman', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
+      { id: 'c13', name: 'Conde Nefaria', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c14', name: 'She-Hulk Deathless', clase: 'Cientifico', tier: 'GOAT', tags: ['exclusivo', 'reliquia'], notes: '', youtube: '', img: '' },
+      { id: 'c15', name: 'Escorpión', clase: 'Cientifico', tier: 'GOAT', tags: ['sinergia', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c16', name: 'Spider-Ham', clase: 'Cientifico', tier: 'GOAT', tags: ['ascenso', 'top7', 'defensor'], notes: '', youtube: '', img: '' },
+      // Místicos
+      { id: 'c17', name: 'Kushala', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c18', name: 'Nico Minoru', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c19', name: 'Spider-Man Pavitr', clase: 'Mistico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c20', name: 'Madelyne Pryor', clase: 'Mistico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c21', name: 'Doctor Strange', clase: 'Mistico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'rotacion'], notes: '', youtube: '', img: '' },
+      // Cósmicos
+      { id: 'c22', name: 'Serpiente', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c23', name: 'Thanos Deathless', clase: 'Cosmico', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
+      { id: 'c24', name: 'Vox', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
+      { id: 'c25', name: 'Hulkling', clase: 'Cosmico', tier: 'GOAT', tags: ['duplica', 'altasing', 'rotacion', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c26', name: 'Karolina Dean', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c27', name: 'Phyla-Vell', clase: 'Cosmico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
+      { id: 'c28', name: 'Gwenom', clase: 'Cosmico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'reliquia'], notes: '', youtube: '', img: '' },
+      { id: 'c29', name: 'Carina', clase: 'Cosmico', tier: 'GOAT', tags: ['ascenso', 'exclusivo', 'duplica', 'altasing'], notes: '', youtube: '', img: '' }
     ];
 
     let characters = [];
-    let activeFilters = []; // Etiquetas seleccionadas para filtrar
+    let activeFilters = [];
     let isAdmin = false;
     let sortableInstances = [];
+    let firestoreLoadedEmpty = false;
 
-    // ==========================================
-    // 2. CARGA DE DATOS DESDE GITHUB PAGES
-    // ==========================================
-    async function loadCharacters() {
-      try {
-        // Intenta leer characters.json del mismo repositorio de GitHub Pages
-        const res = await fetch('./characters.json?t=' + Date.now());
-        if (res.ok) {
-          characters = await res.json();
-        } else {
-          const local = localStorage.getItem('mcoc_tierlist_gh');
-          characters = local ? JSON.parse(local) : DEFAULT_CHARACTERS;
+    // =========================================================================
+    // 3. AUTENTICACIÓN CON GOOGLE (SOLO PERMITE A thesoriplayer@gmail.com)
+    // =========================================================================
+    auth.onAuthStateChanged(user => {
+      if (user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+        setAdminMode(true, user.email);
+        // Si la base de datos de Firebase estaba recién creada y vacía, sube los personajes iniciales automáticamente
+        if (firestoreLoadedEmpty) {
+          persistChanges();
+          firestoreLoadedEmpty = false;
         }
-      } catch (e) {
-        const local = localStorage.getItem('mcoc_tierlist_gh');
-        characters = local ? JSON.parse(local) : DEFAULT_CHARACTERS;
+      } else if (user) {
+        alert(`Acceso denegado: El correo ${user.email} no tiene permisos de administrador. Solo ${ADMIN_EMAIL} puede editar la Tier List.`);
+        auth.signOut();
+        setAdminMode(false);
+      } else {
+        setAdminMode(false);
       }
+    });
+
+    function handleAuthClick() {
+      if (isAdmin) {
+        auth.signOut();
+      } else {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        auth.signInWithPopup(provider).catch(err => {
+          alert("Error al iniciar sesión con Google: " + err.message + "\n\nRecuerda activar 'Google' en Firebase -> Authentication -> Sign-in method y añadir tu dominio de GitHub Pages en Authorized domains.");
+        });
+      }
+    }
+
+    function setAdminMode(enabled, email = '') {
+      isAdmin = enabled;
+      const badge = document.getElementById('statusBadge');
+      const btnAdd = document.getElementById('btnAddChar');
+      const bench = document.getElementById('sidebarBench');
+      const authText = document.getElementById('authBtnText');
+
+      if (isAdmin) {
+        badge.innerText = `✅ Admin: ${email}`;
+        badge.className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700';
+        btnAdd.classList.remove('hidden');
+        bench.classList.remove('hidden');
+        authText.innerText = 'Cerrar sesión';
+      } else {
+        badge.innerText = 'Modo Visitante';
+        badge.className = 'text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
+        btnAdd.classList.add('hidden');
+        bench.classList.add('hidden');
+        authText.innerText = 'Iniciar sesión Admin';
+      }
+      initDragAndDrop();
+    }
+
+    // =========================================================================
+    // 4. CARGA Y GUARDADO DE DATOS EN TIEMPO REAL (FIRESTORE)
+    // =========================================================================
+    function initData() {
       renderFilterBar();
       renderFormTagCheckboxes();
-      renderBoard();
-    }
 
-    // ==========================================
-    // 3. FILTRADOR DE ETIQUETAS COINCIDENTES (AND)
-    // ==========================================
-    function renderFilterBar() {
-      const bar = document.getElementById('filterBar');
-      bar.innerHTML = '';
-
-      AVAILABLE_TAGS.forEach(tag => {
-        const isSelected = activeFilters.includes(tag.id);
-        const btn = document.createElement('button');
-        btn.className = `filter-btn text-xs px-2.5 py-1 rounded-md border font-medium transition ${tag.color} ${isSelected ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-90'}`;
-        btn.innerText = tag.label;
-        btn.onclick = () => toggleFilter(tag.id);
-        bar.appendChild(btn);
+      // Escucha cambios en tiempo real desde Firestore para todos tus suscriptores
+      db.collection('tierlist').doc('main').onSnapshot(doc => {
+        if (doc.exists && doc.data().characters && doc.data().characters.length > 0) {
+          characters = doc.data().characters;
+          firestoreLoadedEmpty = false;
+        } else {
+          characters = DEFAULT_CHARACTERS;
+          firestoreLoadedEmpty = true;
+          if (isAdmin) persistChanges();
+        }
+        renderBoard();
+      }, err => {
+        console.warn("Usando datos por defecto mientras terminas de activar Firestore Database en la consola de Firebase:", err.message);
+        characters = DEFAULT_CHARACTERS;
+        renderBoard();
       });
+    }
 
-      const clearBtn = document.getElementById('btnClearFilters');
-      if (activeFilters.length > 0) {
-        clearBtn.classList.remove('hidden');
-      } else {
-        clearBtn.classList.add('hidden');
+    function persistChanges() {
+      localStorage.setItem('mcoc_tierlist_backup', JSON.stringify(characters));
+      if (isAdmin) {
+        db.collection('tierlist').doc('main').set({
+          characters: characters,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(err => {
+          alert("Error guardando en Firebase Firestore: " + err.message + "\n\nAsegúrate de haber creado 'Firestore Database' y pegado las Reglas en tu consola de Firebase.");
+        });
       }
     }
 
-    function toggleFilter(tagId) {
-      if (activeFilters.includes(tagId)) {
-        activeFilters = activeFilters.filter(id => id !== tagId);
-      } else {
-        activeFilters.push(tagId);
-      }
-      renderFilterBar();
-      renderBoard();
-    }
-
-    function clearFilters() {
-      activeFilters = [];
-      renderFilterBar();
-      renderBoard();
-    }
-
-    function matchesActiveFilters(char) {
-      if (activeFilters.length === 0) return true;
-      const charTags = char.tags || [];
-      // Coincidencia estricta (AND): el personaje debe tener TODAS las etiquetas seleccionadas
-      return activeFilters.every(filterId => charTags.includes(filterId));
-    }
-
-    // ==========================================
-    // 4. RENDERIZADO DEL TABLERO Y TARJETAS
-    // ==========================================
+    // =========================================================================
+    // 5. RENDERIZADO DE TIERS (BANNER ARRIBA + 6 CLASES DEBAJO)
+    // =========================================================================
     function renderBoard() {
       const container = document.getElementById('tiersContainer');
       container.innerHTML = '';
 
       TIERS.forEach(tier => {
-        const row = document.createElement('div');
-        row.className = 'grid grid-cols-7 gap-2.5 bg-gray-900/40 p-2.5 rounded-xl border border-gray-800/80';
+        const tierSection = document.createElement('section');
+        tierSection.className = 'bg-gray-900/40 border border-gray-800 rounded-2xl p-4 shadow-lg space-y-3';
 
-        const tierHeader = document.createElement('div');
-        tierHeader.className = `bg-gradient-to-br ${tier.color} font-extrabold text-sm rounded-lg p-3 flex items-center justify-center text-center shadow-inner`;
-        tierHeader.innerText = tier.name;
-        row.appendChild(tierHeader);
+        // 1. Cuadrado/Banner superior con el nombre del TIER
+        const tierBanner = document.createElement('div');
+        tierBanner.className = `w-full bg-gradient-to-r ${tier.color} border font-extrabold text-base md:text-lg tracking-widest uppercase py-2.5 px-4 rounded-xl text-center shadow-md`;
+        tierBanner.innerText = tier.name;
+        tierSection.appendChild(tierBanner);
 
-        CLASES.forEach(clase => {
+        // 2. Cabeceras de las 6 Clases debajo del título del Tier
+        const classHeadersGrid = document.createElement('div');
+        classHeadersGrid.className = 'grid grid-cols-6 gap-2.5 text-center font-bold text-xs uppercase tracking-wider';
+        CLASES.forEach(cl => {
+          const chHeader = document.createElement('div');
+          chHeader.className = `${cl.headerStyle} p-2 rounded-lg border`;
+          chHeader.innerText = cl.label;
+          classHeadersGrid.appendChild(chHeader);
+        });
+        tierSection.appendChild(classHeadersGrid);
+
+        // 3. Las 6 columnas de personajes de cada clase en este Tier
+        const columnsGrid = document.createElement('div');
+        columnsGrid.className = 'grid grid-cols-6 gap-2.5';
+
+        CLASES.forEach(cl => {
           const cell = document.createElement('div');
-          cell.className = 'drop-zone bg-gray-950/60 rounded-lg p-2 border border-gray-800/60 space-y-2 flex flex-col';
+          cell.className = 'drop-zone bg-gray-950/60 rounded-xl p-2 border border-gray-800/70 space-y-2 flex flex-col';
           cell.dataset.tier = tier.id;
-          cell.dataset.clase = clase;
+          cell.dataset.clase = cl.id;
 
-          const cellChars = characters.filter(c => c.tier === tier.id && c.clase === clase && matchesActiveFilters(c));
+          const cellChars = characters.filter(c => c.tier === tier.id && c.clase === cl.id && matchesActiveFilters(c));
           cellChars.forEach(ch => cell.appendChild(createCharCard(ch)));
 
-          row.appendChild(cell);
+          columnsGrid.appendChild(cell);
         });
 
-        container.appendChild(row);
+        tierSection.appendChild(columnsGrid);
+        container.appendChild(tierSection);
       });
 
       // Renderizar Banquillo Derecho
@@ -388,7 +440,6 @@
       card.dataset.id = ch.id;
       card.onclick = () => openDetailModal(ch.id);
 
-      // Fila superior: Foto + Nombre
       const topRow = document.createElement('div');
       topRow.className = 'flex items-center gap-2';
 
@@ -405,7 +456,6 @@
       topRow.appendChild(nameSpan);
       card.appendChild(topRow);
 
-      // Fila inferior: Etiquetas (Badges)
       if (ch.tags && ch.tags.length > 0) {
         const tagsWrap = document.createElement('div');
         tagsWrap.className = 'flex flex-wrap gap-1';
@@ -424,9 +474,45 @@
       return card;
     }
 
-    // ==========================================
-    // 5. DRAG & DROP Y GUARDADO LOCAL / GITHUB
-    // ==========================================
+    // =========================================================================
+    // 6. FILTROS COINCIDENTES Y DRAG & DROP CON REORDENACIÓN
+    // =========================================================================
+    function renderFilterBar() {
+      const bar = document.getElementById('filterBar');
+      bar.innerHTML = '';
+
+      AVAILABLE_TAGS.forEach(tag => {
+        const isSelected = activeFilters.includes(tag.id);
+        const btn = document.createElement('button');
+        btn.className = `text-xs px-2.5 py-1 rounded-md border font-medium transition ${tag.color} ${isSelected ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-90'}`;
+        btn.innerText = tag.label;
+        btn.onclick = () => {
+          if (activeFilters.includes(tag.id)) {
+            activeFilters = activeFilters.filter(id => id !== tag.id);
+          } else {
+            activeFilters.push(tag.id);
+          }
+          renderFilterBar();
+          renderBoard();
+        };
+        bar.appendChild(btn);
+      });
+
+      document.getElementById('btnClearFilters').classList.toggle('hidden', activeFilters.length === 0);
+    }
+
+    function clearFilters() {
+      activeFilters = [];
+      renderFilterBar();
+      renderBoard();
+    }
+
+    function matchesActiveFilters(char) {
+      if (activeFilters.length === 0) return true;
+      const charTags = char.tags || [];
+      return activeFilters.every(filterId => charTags.includes(filterId));
+    }
+
     function initDragAndDrop() {
       sortableInstances.forEach(inst => inst.destroy());
       sortableInstances = [];
@@ -442,24 +528,31 @@
             const targetTier = evt.to.dataset.tier;
             const targetClase = evt.to.dataset.clase;
 
-            const charIndex = characters.findIndex(c => c.id === charId);
-            if (charIndex > -1) {
-              characters[charIndex].tier = targetTier;
-              if (targetClase !== 'ALL') {
-                characters[charIndex].clase = targetClase;
-              }
-              localStorage.setItem('mcoc_tierlist_gh', JSON.stringify(characters));
-              renderBoard();
+            const charObj = characters.find(c => c.id === charId);
+            if (!charObj) return;
+
+            charObj.tier = targetTier;
+            if (targetClase !== 'ALL') {
+              charObj.clase = targetClase;
             }
+
+            // Reconstruir el orden según cómo hayan quedado las tarjetas dentro de la celda
+            const orderedIdsInTarget = Array.from(evt.to.children).map(el => el.dataset.id);
+            const others = characters.filter(c => !orderedIdsInTarget.includes(c.id));
+            const reorderedTargetChars = orderedIdsInTarget.map(id => characters.find(c => c.id === id)).filter(Boolean);
+
+            characters = [...others, ...reorderedTargetChars];
+            persistChanges();
+            renderBoard();
           }
         });
         sortableInstances.push(sortable);
       });
     }
 
-    // ==========================================
-    // 6. FORMULARIO DE PERSONAJES Y DETALLES
-    // ==========================================
+    // =========================================================================
+    // 7. MODALES (AÑADIR/EDITAR Y VER DETALLE CON YOUTUBE)
+    // =========================================================================
     function renderFormTagCheckboxes() {
       const container = document.getElementById('formTagsContainer');
       container.innerHTML = '';
@@ -520,7 +613,7 @@
           id: 'c_' + Date.now(),
           name,
           clase,
-          tier: 'BENCH', // Va directo al menú derecho
+          tier: 'BENCH',
           tags: selectedTags,
           notes,
           youtube,
@@ -528,7 +621,7 @@
         });
       }
 
-      localStorage.setItem('mcoc_tierlist_gh', JSON.stringify(characters));
+      persistChanges();
       closeFormModal();
       renderBoard();
     }
@@ -582,7 +675,7 @@
         document.getElementById('btnDeleteChar').onclick = () => {
           if (confirm(`¿Eliminar a ${ch.name}?`)) {
             characters = characters.filter(item => item.id !== ch.id);
-            localStorage.setItem('mcoc_tierlist_gh', JSON.stringify(characters));
+            persistChanges();
             closeDetailModal();
             renderBoard();
           }
@@ -608,124 +701,7 @@
       return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
     }
 
-    // ==========================================
-    // 7. MODO ADMIN Y GUARDADO DIRECTO EN GITHUB
-    // ==========================================
-    function openAdminModal() {
-      if (isAdmin) {
-        isAdmin = false;
-        document.getElementById('statusBadge').innerText = 'Modo Visitante';
-        document.getElementById('statusBadge').className = 'text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
-        document.getElementById('btnAddChar').classList.add('hidden');
-        document.getElementById('btnSaveGithub').classList.add('hidden');
-        document.getElementById('sidebarBench').classList.add('hidden');
-        document.getElementById('btnAdminToggle').innerText = '🔒 Admin';
-        initDragAndDrop();
-        return;
-      }
-
-      document.getElementById('ghOwner').value = localStorage.getItem('gh_owner') || '';
-      document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
-      document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
-      document.getElementById('adminModal').classList.remove('hidden');
-      document.getElementById('adminModal').classList.add('flex');
-    }
-
-    function closeAdminModal() {
-      document.getElementById('adminModal').classList.add('hidden');
-      document.getElementById('adminModal').classList.remove('flex');
-    }
-
-    function activateAdmin() {
-      const owner = document.getElementById('ghOwner').value.trim();
-      const repo = document.getElementById('ghRepo').value.trim();
-      const token = document.getElementById('ghToken').value.trim();
-
-      if (!token) {
-        alert('Introduce tu Token de GitHub (o cualquier clave si estás probando en local).');
-        return;
-      }
-
-      localStorage.setItem('gh_owner', owner);
-      localStorage.setItem('gh_repo', repo);
-      localStorage.setItem('gh_token', token);
-
-      isAdmin = true;
-      document.getElementById('statusBadge').innerText = '✅ Modo Admin Activo';
-      document.getElementById('statusBadge').className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700';
-      document.getElementById('btnAddChar').classList.remove('hidden');
-      document.getElementById('btnSaveGithub').classList.remove('hidden');
-      document.getElementById('sidebarBench').classList.remove('hidden');
-      document.getElementById('btnAdminToggle').innerText = 'Salir Admin';
-
-      closeAdminModal();
-      initDragAndDrop();
-    }
-
-    async function saveToGitHub() {
-      const owner = localStorage.getItem('gh_owner');
-      const repo = localStorage.getItem('gh_repo');
-      const token = localStorage.getItem('gh_token');
-
-      if (!owner || !repo || !token) {
-        alert('Faltan datos del repositorio de GitHub en la configuración de Admin.');
-        return;
-      }
-
-      const btn = document.getElementById('btnSaveGithub');
-      btn.innerText = '⏳ Guardando...';
-      btn.disabled = true;
-
-      const path = 'characters.json';
-      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-
-      try {
-        // 1. Obtener el SHA actual de characters.json si ya existe
-        let sha = null;
-        const getRes = await fetch(apiUrl, {
-          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
-        });
-        if (getRes.ok) {
-          const fileData = await getRes.json();
-          sha = fileData.sha;
-        }
-
-        // 2. Codificar el JSON en Base64 compatible con UTF-8 (acentos, ñ, etc.)
-        const jsonString = JSON.stringify(characters, null, 2);
-        const contentBase64 = btoa(unescape(encodeURIComponent(jsonString)));
-
-        // 3. Subir el commit a GitHub
-        const bodyData = {
-          message: 'Actualizar Tier List MCOC',
-          content: contentBase64
-        };
-        if (sha) bodyData.sha = sha;
-
-        const putRes = await fetch(apiUrl, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(bodyData)
-        });
-
-        if (putRes.ok) {
-          alert('✅ ¡Cambios guardados en GitHub! En unos segundos se actualizará para todos tus suscriptores.');
-        } else {
-          const err = await putRes.json();
-          alert('❌ Error al guardar en GitHub: ' + (err.message || 'Verifica tu Token y permisos.'));
-        }
-      } catch (error) {
-        alert('❌ Error de red al conectar con GitHub.');
-      } finally {
-        btn.innerText = '💾 Guardar en GitHub';
-        btn.disabled = false;
-      }
-    }
-
-    loadCharacters();
+    initData();
   </script>
 </body>
 </html>
