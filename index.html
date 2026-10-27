@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tier List MCOC - TheShori</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <style>
+    body { background-color: #0b0c10; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
+    
+    /* Bordes e iluminación por Clase */
+    .clase-Mutante { border-left: 4px solid #eab308; background: linear-gradient(90deg, rgba(234,179,8,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Habil { border-left: 4px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Cientifico { border-left: 4px solid #22c55e; background: linear-gradient(90deg, rgba(34,197,94,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Mistico { border-left: 4px solid #a855f7; background: linear-gradient(90deg, rgba(168,85,247,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Cosmico { border-left: 4px solid #38bdf8; background: linear-gradient(90deg, rgba(56,189,248,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+    .clase-Tecnologico { border-left: 4px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.12) 0%, rgba(17,24,39,0.95) 100%); }
+
+    .char-card { transition: transform 0.12s ease, box-shadow 0.12s ease; cursor: pointer; user-select: none; }
+    .char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65); }
+    .drop-zone { min-height: 115px; }
+    .sortable-ghost { opacity: 0.35; border: 2px dashed #a855f7; }
+    .filter-btn.active { ring: 2px solid white; transform: scale(1.03); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- BARRA SUPERIOR -->
+  <header class="bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-3.5 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-30">
+    <div class="flex items-center gap-3">
+      <span class="text-xl md:text-2xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
+        MCOC TIER LIST
+      </span>
+      <span id="statusBadge" class="text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
+        Modo Visitante
+      </span>
+    </div>
+
+    <div class="flex items-center gap-2.5">
+      <!-- Botones exclusivos Admin -->
+      <button id="btnAddChar" onclick="openFormModal()" class="hidden bg-purple-600 hover:bg-purple-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs md:text-sm transition">
+        + Añadir Personaje
+      </button>
+      <button id="btnSaveGithub" onclick="saveToGitHub()" class="hidden bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs md:text-sm transition">
+        💾 Guardar en GitHub
+      </button>
+      <button id="btnAdminToggle" onclick="openAdminModal()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition">
+        🔒 Admin
+      </button>
+    </div>
+  </header>
+
+  <!-- BARRA DE FILTROS DE ETIQUETAS (ACUMULATIVOS / COINCIDENTES) -->
+  <section class="bg-gray-900/60 border-b border-gray-800/80 px-6 py-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-bold uppercase tracking-wider text-gray-400 mr-1">Filtrar por etiquetas (coincidentes):</span>
+      <div id="filterBar" class="flex flex-wrap gap-1.5"></div>
+      <button id="btnClearFilters" onclick="clearFilters()" class="hidden text-xs text-red-400 hover:text-red-300 underline ml-2">
+        Limpiar filtros
+      </button>
+    </div>
+  </section>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <div class="flex flex-1 overflow-hidden">
+    
+    <!-- TABLA DE TIERS -->
+    <main class="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-auto">
+      <!-- Cabecera Clases -->
+      <div class="grid grid-cols-7 gap-2.5 mb-2.5 min-w-[1050px] text-center font-bold text-xs md:text-sm uppercase tracking-wider">
+        <div class="bg-gray-900 p-2.5 rounded-lg border border-gray-800 flex items-center justify-center text-gray-400">TIER</div>
+        <div class="bg-yellow-950/40 text-yellow-400 p-2.5 rounded-lg border border-yellow-700/50">Mutantes</div>
+        <div class="bg-red-950/40 text-red-400 p-2.5 rounded-lg border border-red-700/50">Hábiles</div>
+        <div class="bg-green-950/40 text-green-400 p-2.5 rounded-lg border border-green-700/50">Científicos</div>
+        <div class="bg-purple-950/40 text-purple-400 p-2.5 rounded-lg border border-purple-700/50">Místicos</div>
+        <div class="bg-sky-950/40 text-sky-400 p-2.5 rounded-lg border border-sky-700/50">Cósmicos</div>
+        <div class="bg-blue-950/40 text-blue-400 p-2.5 rounded-lg border border-blue-700/50">Tecnológicos</div>
+      </div>
+
+      <!-- Filas dinámicas de Tiers -->
+      <div id="tiersContainer" class="space-y-3 min-w-[1050px]"></div>
+    </main>
+
+    <!-- MENÚ DERECHO: BANQUILLO DE PERSONAJES NUEVOS (SOLO ADMIN) -->
+    <aside id="sidebarBench" class="w-80 bg-gray-900 border-l border-gray-800 p-4 flex flex-col hidden">
+      <div class="mb-3">
+        <h2 class="text-sm font-bold text-white flex items-center justify-between">
+          <span>📥 Nuevos / Sin Clasificar</span>
+          <span id="benchCount" class="bg-purple-600 text-xs px-2 py-0.5 rounded-full">0</span>
+        </h2>
+        <p class="text-xs text-gray-400 mt-1">Arrastra los personajes nuevos desde aquí a su Tier correspondiente.</p>
+      </div>
+      <div id="benchDropZone" data-tier="BENCH" data-clase="ALL" class="drop-zone flex-1 bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2.5 space-y-2 overflow-y-auto"></div>
+    </aside>
+  </div>
+
+  <!-- MODAL 1: CREAR / EDITAR PERSONAJE -->
+  <div id="formModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="formModalTitle" class="text-lg font-bold text-white">Añadir Personaje</h3>
+        <button onclick="closeFormModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+      </div>
+
+      <form id="charForm" onsubmit="submitCharForm(event)" class="space-y-4 text-sm">
+        <input type="hidden" id="editCharId">
+        <div>
+          <label class="block text-gray-300 mb-1 font-medium">Nombre del Personaje *</label>
+          <input type="text" id="charName" required placeholder="Ej: Onslaught" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-gray-300 mb-1 font-medium">Clase *</label>
+            <select id="charClass" required class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+              <option value="Mutante">Mutante</option>
+              <option value="Habil">Hábil</option>
+              <option value="Cientifico">Científico</option>
+              <option value="Mistico">Místico</option>
+              <option value="Cosmico">Cósmico</option>
+              <option value="Tecnologico">Tecnológico</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-gray-300 mb-1 font-medium">URL Avatar (Opcional)</label>
+            <input type="url" id="charImg" placeholder="https://..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-gray-300 mb-1.5 font-medium">Etiquetas del Personaje</label>
+          <div id="formTagsContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gray-950/70 p-3 rounded-xl border border-gray-800"></div>
+        </div>
+
+        <div>
+          <label class="block text-gray-300 mb-1 font-medium">Características / Rotación / Notas</label>
+          <textarea id="charNotes" rows="3" placeholder="Detalles sobre su rotación, reliquia ideal, sinergias..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-gray-300 mb-1 font-medium">Enlace a tu Vídeo de YouTube</label>
+          <input type="url" id="charYoutube" placeholder="https://www.youtube.com/watch?v=..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeFormModal()" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold">Guardar Personaje</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: FICHA DEL PERSONAJE + VÍDEO YOUTUBE -->
+  <div id="detailModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl">
+      <div class="p-5 border-b border-gray-800 flex justify-between items-start">
+        <div class="flex items-center gap-3.5">
+          <img id="detailImg" src="" alt="Avatar" class="w-14 h-14 rounded-xl object-cover border border-gray-600 hidden">
+          <div>
+            <h3 id="detailName" class="text-xl md:text-2xl font-extrabold text-white"></h3>
+            <span id="detailClassBadge" class="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full font-semibold bg-gray-800 text-gray-300"></span>
+            <div id="detailTags" class="flex flex-wrap gap-1.5 mt-2"></div>
+          </div>
+        </div>
+        <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+
+      <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-1.5">Características y Análisis</h4>
+          <p id="detailNotes" class="text-gray-200 text-sm whitespace-pre-line bg-gray-950/70 p-3.5 rounded-xl border border-gray-800"></p>
+        </div>
+
+        <div id="detailVideoSection" class="hidden">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-red-400 mb-1.5">📺 Análisis en YouTube</h4>
+          <div class="aspect-video w-full rounded-xl overflow-hidden border border-gray-800 bg-black">
+            <iframe id="detailYoutubeIframe" class="w-full h-full" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          </div>
+        </div>
+
+        <div id="adminActionsContainer" class="hidden pt-3 border-t border-gray-800 flex justify-between items-center">
+          <button id="btnEditExisting" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-3.5 py-2 rounded-lg">
+            ✏️ Editar Personaje / Vídeo
+          </button>
+          <button id="btnDeleteChar" class="text-xs text-red-400 hover:text-red-300 underline">
+            Eliminar personaje
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: CONEXIÓN ADMIN CON GITHUB -->
+  <div id="adminModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 text-sm">
+      <div class="flex justify-between items-center">
+        <h3 class="text-lg font-bold text-white">Acceso Administrador (GitHub)</h3>
+        <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
+      </div>
+      <p class="text-xs text-gray-400">Introduce los datos de tu repositorio para desbloquear el modo edición y guardar los cambios directamente en GitHub Pages.</p>
+      
+      <div>
+        <label class="block text-gray-300 mb-1">Usuario de GitHub</label>
+        <input type="text" id="ghOwner" placeholder="Ej: TheShori" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-1">Nombre del Repositorio</label>
+        <input type="text" id="ghRepo" placeholder="Ej: mcoc-tierlist" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+      </div>
+      <div>
+        <label class="block text-gray-300 mb-1">GitHub Personal Access Token (PAT)</label>
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeAdminModal()" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-300">Cancelar</button>
+        <button onclick="activateAdmin()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold">Desbloquear Admin</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. CONFIGURACIÓN DE ETIQUETAS (BADGES)
+    // ==========================================
+    const AVAILABLE_TAGS = [
+      { id: 'top7',      label: 'Top 7★',        color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
+      { id: 'exclusivo', label: 'Exclusivo',     color: 'bg-gray-800 text-gray-200 border-gray-600' },
+      { id: 'ascenso',   label: 'Subida / Meta', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
+      { id: 'duplica',   label: 'Duplica',       color: 'bg-amber-950/90 text-amber-300 border-amber-700/80' },
+      { id: 'altasing',  label: 'Alta Sing.',    color: 'bg-orange-950/90 text-orange-300 border-orange-700/80' },
+      { id: 'defensor',  label: 'Defensor',      color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
+      { id: 'rotacion',  label: 'Rotación',      color: 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80' },
+      { id: 'inmunidad', label: 'Inmunidad',     color: 'bg-red-950/90 text-red-300 border-red-700/80' },
+      { id: 'reliquia',  label: 'Reliquia',      color: 'bg-yellow-950/90 text-yellow-300 border-yellow-700/80' },
+      { id: 'sinergia',  label: 'Sinergia',      color: 'bg-teal-950/90 text-teal-300 border-teal-700/80' }
+    ];
+
+    const TIERS = [
+      { id: 'GOAT', name: 'GOAT TIER', color: 'from-amber-400 to-yellow-600 text-black' },
+      { id: 'GOD', name: 'GOD TIER', color: 'from-purple-600 to-indigo-600 text-white' },
+      { id: 'DEMIGOD', name: 'DEMI-GOD', color: 'from-blue-600 to-cyan-600 text-white' },
+      { id: 'UTILITY', name: 'MUY ÚTILES', color: 'from-emerald-600 to-teal-600 text-white' }
+    ];
+
+    const CLASES = ['Mutante', 'Habil', 'Cientifico', 'Mistico', 'Cosmico', 'Tecnologico'];
+
+    // Datos iniciales migrados de tu Excel con el nuevo sistema de etiquetas
+    const DEFAULT_CHARACTERS = [
+      { id: 'c1', name: 'Onslaught', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'defensor'], notes: 'Dominante en ataque y defensa. Daño de neurochoque brutal.', youtube: '', img: '' },
+      { id: 'c2', name: 'Capitana Britania', clase: 'Mutante', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c3', name: 'Jean Grey', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c4', name: 'Mister Siniestro', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'inmunidad', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c5', name: 'Kitty Pride', clase: 'Mutante', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'inmunidad'], notes: '', youtube: '', img: '' },
+      { id: 'c6', name: 'Okoye', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica'], notes: '', youtube: '', img: '' },
+      { id: 'c7', name: 'Doctor Bong', clase: 'Habil', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c8', name: 'Kingpin', clase: 'Habil', tier: 'GOAT', tags: ['duplica', 'inmunidad', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c9', name: 'Lumatrix', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica', 'reliquia', 'rotacion', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c10', name: 'Nick Fury', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c11', name: 'Spider-Woman', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
+      { id: 'c12', name: 'Conde Nefaria', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c13', name: 'Escorpión', clase: 'Cientifico', tier: 'GOAT', tags: ['sinergia', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c14', name: 'Kushala', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'rotacion'], notes: '', youtube: '', img: '' },
+      { id: 'c15', name: 'Nico Minoru', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c16', name: 'Serpiente', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
+      { id: 'c17', name: 'Hulkling', clase: 'Cosmico', tier: 'GOAT', tags: ['duplica', 'altasing', 'rotacion', 'defensor'], notes: '', youtube: '', img: '' }
+    ];
+
+    let characters = [];
+    let activeFilters = []; // Etiquetas seleccionadas para filtrar
+    let isAdmin = false;
+    let sortableInstances = [];
+
+    // ==========================================
+    // 2. CARGA DE DATOS DESDE GITHUB PAGES
+    // ==========================================
+    async function loadCharacters() {
+      try {
+        // Intenta leer characters.json del mismo repositorio de GitHub Pages
+        const res = await fetch('./characters.json?t=' + Date.now());
+        if (res.ok) {
+          characters = await res.json();
+        } else {
+          const local = localStorage.getItem('mcoc_tierlist_gh');
+          characters = local ? JSON.parse(local) : DEFAULT_CHARACTERS;
+        }
+      } catch (e) {
+        const local = localStorage.getItem('mcoc_tierlist_gh');
+        characters = local ? JSON.parse(local) : DEFAULT_CHARACTERS;
+      }
+      renderFilterBar();
+      renderFormTagCheckboxes();
+      renderBoard();
+    }
+
+    // ==========================================
+    // 3. FILTRADOR DE ETIQUETAS COINCIDENTES (AND)
+    // ==========================================
+    function renderFilterBar() {
+      const bar = document.getElementById('filterBar');
+      bar.innerHTML = '';
+
+      AVAILABLE_TAGS.forEach(tag => {
+        const isSelected = activeFilters.includes(tag.id);
+        const btn = document.createElement('button');
+        btn.className = `filter-btn text-xs px-2.5 py-1 rounded-md border font-medium transition ${tag.color} ${isSelected ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-90'}`;
+        btn.innerText = tag.label;
+        btn.onclick = () => toggleFilter(tag.id);
+        bar.appendChild(btn);
+      });
+
+      const clearBtn = document.getElementById('btnClearFilters');
+      if (activeFilters.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+    }
+
+    function toggleFilter(tagId) {
+      if (activeFilters.includes(tagId)) {
+        activeFilters = activeFilters.filter(id => id !== tagId);
+      } else {
+        activeFilters.push(tagId);
+      }
+      renderFilterBar();
+      renderBoard();
+    }
+
+    function clearFilters() {
+      activeFilters = [];
+      renderFilterBar();
+      renderBoard();
+    }
+
+    function matchesActiveFilters(char) {
+      if (activeFilters.length === 0) return true;
+      const charTags = char.tags || [];
+      // Coincidencia estricta (AND): el personaje debe tener TODAS las etiquetas seleccionadas
+      return activeFilters.every(filterId => charTags.includes(filterId));
+    }
+
+    // ==========================================
+    // 4. RENDERIZADO DEL TABLERO Y TARJETAS
+    // ==========================================
+    function renderBoard() {
+      const container = document.getElementById('tiersContainer');
+      container.innerHTML = '';
+
+      TIERS.forEach(tier => {
+        const row = document.createElement('div');
+        row.className = 'grid grid-cols-7 gap-2.5 bg-gray-900/40 p-2.5 rounded-xl border border-gray-800/80';
+
+        const tierHeader = document.createElement('div');
+        tierHeader.className = `bg-gradient-to-br ${tier.color} font-extrabold text-sm rounded-lg p-3 flex items-center justify-center text-center shadow-inner`;
+        tierHeader.innerText = tier.name;
+        row.appendChild(tierHeader);
+
+        CLASES.forEach(clase => {
+          const cell = document.createElement('div');
+          cell.className = 'drop-zone bg-gray-950/60 rounded-lg p-2 border border-gray-800/60 space-y-2 flex flex-col';
+          cell.dataset.tier = tier.id;
+          cell.dataset.clase = clase;
+
+          const cellChars = characters.filter(c => c.tier === tier.id && c.clase === clase && matchesActiveFilters(c));
+          cellChars.forEach(ch => cell.appendChild(createCharCard(ch)));
+
+          row.appendChild(cell);
+        });
+
+        container.appendChild(row);
+      });
+
+      // Renderizar Banquillo Derecho
+      const benchZone = document.getElementById('benchDropZone');
+      benchZone.innerHTML = '';
+      const benchChars = characters.filter(c => c.tier === 'BENCH' && matchesActiveFilters(c));
+      benchChars.forEach(ch => benchZone.appendChild(createCharCard(ch)));
+      document.getElementById('benchCount').innerText = benchChars.length;
+
+      initDragAndDrop();
+    }
+
+    function createCharCard(ch) {
+      const card = document.createElement('div');
+      card.className = `char-card clase-${ch.clase} rounded-lg p-2.5 text-xs flex flex-col gap-1.5 bg-gray-900 shadow-sm border border-gray-800/80`;
+      card.dataset.id = ch.id;
+      card.onclick = () => openDetailModal(ch.id);
+
+      // Fila superior: Foto + Nombre
+      const topRow = document.createElement('div');
+      topRow.className = 'flex items-center gap-2';
+
+      if (ch.img) {
+        const avatar = document.createElement('img');
+        avatar.src = ch.img;
+        avatar.className = 'w-6 h-6 rounded-full object-cover flex-shrink-0 border border-gray-600';
+        topRow.appendChild(avatar);
+      }
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'font-bold text-gray-100 text-xs leading-tight';
+      nameSpan.innerText = ch.name;
+      topRow.appendChild(nameSpan);
+      card.appendChild(topRow);
+
+      // Fila inferior: Etiquetas (Badges)
+      if (ch.tags && ch.tags.length > 0) {
+        const tagsWrap = document.createElement('div');
+        tagsWrap.className = 'flex flex-wrap gap-1';
+        ch.tags.forEach(tagId => {
+          const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
+          if (tagObj) {
+            const badge = document.createElement('span');
+            badge.className = `text-[10px] px-1.5 py-0.5 rounded border font-medium leading-none ${tagObj.color}`;
+            badge.innerText = tagObj.label;
+            tagsWrap.appendChild(badge);
+          }
+        });
+        card.appendChild(tagsWrap);
+      }
+
+      return card;
+    }
+
+    // ==========================================
+    // 5. DRAG & DROP Y GUARDADO LOCAL / GITHUB
+    // ==========================================
+    function initDragAndDrop() {
+      sortableInstances.forEach(inst => inst.destroy());
+      sortableInstances = [];
+
+      document.querySelectorAll('.drop-zone').forEach(zone => {
+        const sortable = new Sortable(zone, {
+          group: 'mcoc-tierlist',
+          animation: 150,
+          disabled: !isAdmin,
+          ghostClass: 'sortable-ghost',
+          onEnd: function (evt) {
+            const charId = evt.item.dataset.id;
+            const targetTier = evt.to.dataset.tier;
+            const targetClase = evt.to.dataset.clase;
+
+            const charIndex = characters.findIndex(c => c.id === charId);
+            if (charIndex > -1) {
+              characters[charIndex].tier = targetTier;
+              if (targetClase !== 'ALL') {
+                characters[charIndex].clase = targetClase;
+              }
+              localStorage.setItem('mcoc_tierlist_gh', JSON.stringify(characters));
+              renderBoard();
+            }
+          }
+        });
+        sortableInstances.push(sortable);
+      });
+    }
+
+    // ==========================================
+    // 6. FORMULARIO DE PERSONAJES Y DETALLES
+    // ==========================================
+    function renderFormTagCheckboxes() {
+      const container = document.getElementById('formTagsContainer');
+      container.innerHTML = '';
+      AVAILABLE_TAGS.forEach(tag => {
+        const label = document.createElement('label');
+        label.className = 'flex items-center gap-2 cursor-pointer text-xs text-gray-300';
+        label.innerHTML = `<input type="checkbox" value="${tag.id}" class="char-tag-cb rounded bg-gray-800 border-gray-700"> <span class="px-1.5 py-0.5 rounded border text-[11px] ${tag.color}">${tag.label}</span>`;
+        container.appendChild(label);
+      });
+    }
+
+    function openFormModal(editId = null) {
+      document.getElementById('charForm').reset();
+      document.getElementById('editCharId').value = editId || '';
+      
+      if (editId) {
+        const ch = characters.find(c => c.id === editId);
+        if (!ch) return;
+        document.getElementById('formModalTitle').innerText = `Editar: ${ch.name}`;
+        document.getElementById('charName').value = ch.name;
+        document.getElementById('charClass').value = ch.clase;
+        document.getElementById('charImg').value = ch.img || '';
+        document.getElementById('charNotes').value = ch.notes || '';
+        document.getElementById('charYoutube').value = ch.youtube || '';
+        document.querySelectorAll('.char-tag-cb').forEach(cb => {
+          cb.checked = (ch.tags || []).includes(cb.value);
+        });
+      } else {
+        document.getElementById('formModalTitle').innerText = 'Añadir Nuevo Personaje';
+      }
+
+      document.getElementById('formModal').classList.remove('hidden');
+      document.getElementById('formModal').classList.add('flex');
+    }
+
+    function closeFormModal() {
+      document.getElementById('formModal').classList.add('hidden');
+      document.getElementById('formModal').classList.remove('flex');
+    }
+
+    function submitCharForm(e) {
+      e.preventDefault();
+      const editId = document.getElementById('editCharId').value;
+      const name = document.getElementById('charName').value.trim();
+      const clase = document.getElementById('charClass').value;
+      const img = document.getElementById('charImg').value.trim();
+      const notes = document.getElementById('charNotes').value.trim();
+      const youtube = document.getElementById('charYoutube').value.trim();
+      const selectedTags = Array.from(document.querySelectorAll('.char-tag-cb:checked')).map(cb => cb.value);
+
+      if (editId) {
+        const idx = characters.findIndex(c => c.id === editId);
+        if (idx > -1) {
+          characters[idx] = { ...characters[idx], name, clase, img, notes, youtube, tags: selectedTags };
+        }
+      } else {
+        characters.push({
+          id: 'c_' + Date.now(),
+          name,
+          clase,
+          tier: 'BENCH', // Va directo al menú derecho
+          tags: selectedTags,
+          notes,
+          youtube,
+          img
+        });
+      }
+
+      localStorage.setItem('mcoc_tierlist_gh', JSON.stringify(characters));
+      closeFormModal();
+      renderBoard();
+    }
+
+    function openDetailModal(charId) {
+      const ch = characters.find(c => c.id === charId);
+      if (!ch) return;
+
+      document.getElementById('detailName').innerText = ch.name;
+      document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
+      document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
+
+      const tagsContainer = document.getElementById('detailTags');
+      tagsContainer.innerHTML = '';
+      (ch.tags || []).forEach(tagId => {
+        const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
+        if (tagObj) {
+          const span = document.createElement('span');
+          span.className = `text-xs px-2 py-0.5 rounded border font-medium ${tagObj.color}`;
+          span.innerText = tagObj.label;
+          tagsContainer.appendChild(span);
+        }
+      });
+
+      const imgEl = document.getElementById('detailImg');
+      if (ch.img) {
+        imgEl.src = ch.img;
+        imgEl.classList.remove('hidden');
+      } else {
+        imgEl.classList.add('hidden');
+      }
+
+      const videoSection = document.getElementById('detailVideoSection');
+      const iframe = document.getElementById('detailYoutubeIframe');
+      const embedUrl = getYoutubeEmbedUrl(ch.youtube);
+      if (embedUrl) {
+        iframe.src = embedUrl;
+        videoSection.classList.remove('hidden');
+      } else {
+        iframe.src = '';
+        videoSection.classList.add('hidden');
+      }
+
+      const adminActions = document.getElementById('adminActionsContainer');
+      if (isAdmin) {
+        adminActions.classList.remove('hidden');
+        document.getElementById('btnEditExisting').onclick = () => {
+          closeDetailModal();
+          openFormModal(ch.id);
+        };
+        document.getElementById('btnDeleteChar').onclick = () => {
+          if (confirm(`¿Eliminar a ${ch.name}?`)) {
+            characters = characters.filter(item => item.id !== ch.id);
+            localStorage.setItem('mcoc_tierlist_gh', JSON.stringify(characters));
+            closeDetailModal();
+            renderBoard();
+          }
+        };
+      } else {
+        adminActions.classList.add('hidden');
+      }
+
+      document.getElementById('detailModal').classList.remove('hidden');
+      document.getElementById('detailModal').classList.add('flex');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailYoutubeIframe').src = '';
+      document.getElementById('detailModal').classList.add('hidden');
+      document.getElementById('detailModal').classList.remove('flex');
+    }
+
+    function getYoutubeEmbedUrl(url) {
+      if (!url) return null;
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+    }
+
+    // ==========================================
+    // 7. MODO ADMIN Y GUARDADO DIRECTO EN GITHUB
+    // ==========================================
+    function openAdminModal() {
+      if (isAdmin) {
+        isAdmin = false;
+        document.getElementById('statusBadge').innerText = 'Modo Visitante';
+        document.getElementById('statusBadge').className = 'text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
+        document.getElementById('btnAddChar').classList.add('hidden');
+        document.getElementById('btnSaveGithub').classList.add('hidden');
+        document.getElementById('sidebarBench').classList.add('hidden');
+        document.getElementById('btnAdminToggle').innerText = '🔒 Admin';
+        initDragAndDrop();
+        return;
+      }
+
+      document.getElementById('ghOwner').value = localStorage.getItem('gh_owner') || '';
+      document.getElementById('ghRepo').value = localStorage.getItem('gh_repo') || '';
+      document.getElementById('ghToken').value = localStorage.getItem('gh_token') || '';
+      document.getElementById('adminModal').classList.remove('hidden');
+      document.getElementById('adminModal').classList.add('flex');
+    }
+
+    function closeAdminModal() {
+      document.getElementById('adminModal').classList.add('hidden');
+      document.getElementById('adminModal').classList.remove('flex');
+    }
+
+    function activateAdmin() {
+      const owner = document.getElementById('ghOwner').value.trim();
+      const repo = document.getElementById('ghRepo').value.trim();
+      const token = document.getElementById('ghToken').value.trim();
+
+      if (!token) {
+        alert('Introduce tu Token de GitHub (o cualquier clave si estás probando en local).');
+        return;
+      }
+
+      localStorage.setItem('gh_owner', owner);
+      localStorage.setItem('gh_repo', repo);
+      localStorage.setItem('gh_token', token);
+
+      isAdmin = true;
+      document.getElementById('statusBadge').innerText = '✅ Modo Admin Activo';
+      document.getElementById('statusBadge').className = 'text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700';
+      document.getElementById('btnAddChar').classList.remove('hidden');
+      document.getElementById('btnSaveGithub').classList.remove('hidden');
+      document.getElementById('sidebarBench').classList.remove('hidden');
+      document.getElementById('btnAdminToggle').innerText = 'Salir Admin';
+
+      closeAdminModal();
+      initDragAndDrop();
+    }
+
+    async function saveToGitHub() {
+      const owner = localStorage.getItem('gh_owner');
+      const repo = localStorage.getItem('gh_repo');
+      const token = localStorage.getItem('gh_token');
+
+      if (!owner || !repo || !token) {
+        alert('Faltan datos del repositorio de GitHub en la configuración de Admin.');
+        return;
+      }
+
+      const btn = document.getElementById('btnSaveGithub');
+      btn.innerText = '⏳ Guardando...';
+      btn.disabled = true;
+
+      const path = 'characters.json';
+      const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+
+      try {
+        // 1. Obtener el SHA actual de characters.json si ya existe
+        let sha = null;
+        const getRes = await fetch(apiUrl, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if (getRes.ok) {
+          const fileData = await getRes.json();
+          sha = fileData.sha;
+        }
+
+        // 2. Codificar el JSON en Base64 compatible con UTF-8 (acentos, ñ, etc.)
+        const jsonString = JSON.stringify(characters, null, 2);
+        const contentBase64 = btoa(unescape(encodeURIComponent(jsonString)));
+
+        // 3. Subir el commit a GitHub
+        const bodyData = {
+          message: 'Actualizar Tier List MCOC',
+          content: contentBase64
+        };
+        if (sha) bodyData.sha = sha;
+
+        const putRes = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(bodyData)
+        });
+
+        if (putRes.ok) {
+          alert('✅ ¡Cambios guardados en GitHub! En unos segundos se actualizará para todos tus suscriptores.');
+        } else {
+          const err = await putRes.json();
+          alert('❌ Error al guardar en GitHub: ' + (err.message || 'Verifica tu Token y permisos.'));
+        }
+      } catch (error) {
+        alert('❌ Error de red al conectar con GitHub.');
+      } finally {
+        btn.innerText = '💾 Guardar en GitHub';
+        btn.disabled = false;
+      }
+    }
+
+    loadCharacters();
+  </script>
+</body>
+</html>
