@@ -7,7 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   
-  <!-- Firebase SDKs (Email/Password Auth + Firestore Database en tiempo real) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -15,7 +15,6 @@
   <style>
     body { background-color: #0b0c10; color: #f3f4f6; font-family: 'Segoe UI', system-ui, sans-serif; }
     
-    /* Bordes e iluminación por Clase */
     .clase-Mutante { border-left: 4px solid #eab308; background: linear-gradient(90deg, rgba(234,179,8,0.12) 0%, rgba(17,24,39,0.95) 100%); }
     .clase-Habil { border-left: 4px solid #ef4444; background: linear-gradient(90deg, rgba(239,68,68,0.12) 0%, rgba(17,24,39,0.95) 100%); }
     .clase-Cientifico { border-left: 4px solid #22c55e; background: linear-gradient(90deg, rgba(34,197,94,0.12) 0%, rgba(17,24,39,0.95) 100%); }
@@ -43,19 +42,17 @@
     </div>
 
     <div class="flex items-center gap-2.5">
-      <!-- Botón Añadir Personaje (Solo visible en Admin) -->
       <button id="btnAddChar" onclick="openFormModal()" class="hidden bg-purple-600 hover:bg-purple-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs md:text-sm transition">
         + Añadir Personaje
       </button>
 
-      <!-- Botón Abrir Login Correo/Contraseña o Cerrar Sesión -->
       <button id="btnAdminAuth" onclick="handleAuthButtonClick()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition">
         🔒 Acceso Admin
       </button>
     </div>
   </header>
 
-  <!-- BARRA DE FILTROS DE ETIQUETAS COINCIDENTES -->
+  <!-- BARRA DE FILTROS DE ETIQUETAS -->
   <section class="bg-gray-900/60 border-b border-gray-800/80 px-6 py-3">
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-xs font-bold uppercase tracking-wider text-gray-400 mr-1">Filtrar por etiquetas (coincidentes):</span>
@@ -68,13 +65,10 @@
 
   <!-- CONTENEDOR PRINCIPAL -->
   <div class="flex flex-1 overflow-hidden">
-    
-    <!-- ZONA DE TIERS (Con el nombre del TIER arriba y las 6 clases debajo) -->
     <main class="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-auto">
       <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto"></div>
     </main>
 
-    <!-- MENÚ DERECHO: BANQUILLO DE PERSONAJES NUEVOS (SOLO ADMIN) -->
     <aside id="sidebarBench" class="w-80 bg-gray-900 border-l border-gray-800 p-4 flex flex-col hidden">
       <div class="mb-3">
         <h2 class="text-sm font-bold text-white flex items-center justify-between">
@@ -87,7 +81,7 @@
     </aside>
   </div>
 
-  <!-- MODAL LOGIN ADMIN (CORREO Y CONTRASEÑA) -->
+  <!-- MODAL LOGIN ADMIN -->
   <div id="loginModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
       <div class="flex justify-between items-center mb-4">
@@ -116,7 +110,7 @@
 
   <!-- MODAL CREAR / EDITAR PERSONAJE -->
   <div id="formModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
         <h3 id="formModalTitle" class="text-lg font-bold text-white">Añadir Personaje</h3>
         <button onclick="closeFormModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
@@ -148,13 +142,13 @@
         </div>
 
         <div>
-          <label class="block text-gray-300 mb-1.5 font-medium">Etiquetas del Personaje</label>
-          <div id="formTagsContainer" class="grid grid-cols-2 sm:grid-cols-3 gap-2 bg-gray-950/70 p-3 rounded-xl border border-gray-800"></div>
+          <label class="block text-gray-300 mb-1.5 font-medium">Etiquetas Oficiales (Leyenda MCOC)</label>
+          <div id="formTagsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-950/70 p-3 rounded-xl border border-gray-800 max-h-56 overflow-y-auto"></div>
         </div>
 
         <div>
           <label class="block text-gray-300 mb-1 font-medium">Características / Rotación / Notas</label>
-          <textarea id="charNotes" rows="3" placeholder="Detalles sobre su rotación, reliquia ideal, sinergias..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"></textarea>
+          <textarea id="charNotes" rows="3" placeholder="Detalles sobre su rotación, reliquia ideal..." class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white"></textarea>
         </div>
 
         <div>
@@ -170,7 +164,7 @@
     </div>
   </div>
 
-  <!-- MODAL FICHA DEL PERSONAJE + VÍDEO YOUTUBE -->
+  <!-- MODAL DETALLE + YOUTUBE -->
   <div id="detailModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl">
       <div class="p-5 border-b border-gray-800 flex justify-between items-start">
@@ -211,9 +205,6 @@
   </div>
 
   <script>
-    // =========================================================================
-    // 1. CONFIGURACIÓN DE FIREBASE Y CORREO DE ADMINISTRADOR
-    // =========================================================================
     const ADMIN_EMAIL = "thesoriplayer@gmail.com";
 
     const firebaseConfig = {
@@ -229,27 +220,36 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // =========================================================================
-    // 2. CONFIGURACIÓN DE ETIQUETAS, TIERS Y CLASES
-    // =========================================================================
     const AVAILABLE_TAGS = [
-      { id: 'top7',      label: 'Top 7★',        color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
-      { id: 'exclusivo', label: 'Exclusivo',     color: 'bg-gray-800 text-gray-200 border-gray-600' },
-      { id: 'ascenso',   label: 'Subida / Meta', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
-      { id: 'duplica',   label: 'Duplica',       color: 'bg-amber-950/90 text-amber-300 border-amber-700/80' },
-      { id: 'altasing',  label: 'Alta Sing.',    color: 'bg-orange-950/90 text-orange-300 border-orange-700/80' },
-      { id: 'defensor',  label: 'Defensor',      color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
-      { id: 'rotacion',  label: 'Rotación',      color: 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80' },
-      { id: 'inmunidad', label: 'Inmunidad',     color: 'bg-red-950/90 text-red-300 border-red-700/80' },
-      { id: 'reliquia',  label: 'Reliquia',      color: 'bg-yellow-950/90 text-yellow-300 border-yellow-700/80' },
-      { id: 'sinergia',  label: 'Sinergia',      color: 'bg-teal-950/90 text-teal-300 border-teal-700/80' }
+      { id: 'asc7',       label: '⬆️ Ascensión 7 Estrellas', color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
+      { id: 'gbasico',    label: '💜 7 Estrellas Grupo Básico', color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
+      { id: 'gtitan',     label: '💚 7 Estrellas Cristal Titán', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
+      { id: 'glealtad',   label: '🩷 7 Estrellas Cristal Lealtad', color: 'bg-pink-950/90 text-pink-300 border-pink-700/80' },
+      { id: 'gincursion', label: '💛 7 Estrellas Cristal Incursión', color: 'bg-amber-950/90 text-amber-300 border-amber-700/80' },
+      { id: 'geventos',   label: '🖤 7 Estrellas Eventos', color: 'bg-gray-800 text-gray-200 border-gray-600' },
+      { id: 'gsagas',     label: '🩷 7 Estrellas Sagas', color: 'bg-rose-950/90 text-rose-300 border-rose-700/80' },
+      { id: 'gvalentin',  label: '💖 7 Estrellas San Valentín', color: 'bg-red-950/90 text-red-300 border-red-700/80' },
+      { id: 'gbanquete',  label: '🩶 7 Estrellas Banquete 2025', color: 'bg-slate-800 text-slate-200 border-slate-600' },
+      { id: 'habilidad',  label: '⭐ Habilidad Despertada', color: 'bg-yellow-950/90 text-yellow-300 border-yellow-700/80' },
+      { id: 'singalta',   label: '🔝 Singularidad Alta', color: 'bg-orange-950/90 text-orange-300 border-orange-700/80' },
+      { id: 'suicidas',   label: '💀 Amigable Maestrías Suicidas', color: 'bg-stone-900 text-stone-300 border-stone-700' },
+      { id: 'sinergias',  label: '🤝 Se Vuelve Mejor con Sinergias', color: 'bg-teal-950/90 text-teal-300 border-teal-700/80' },
+      { id: 'saberjugar', label: '🎮 Requiere Saber Jugar Con Él', color: 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80' },
+      { id: 'defensor',   label: '🛡️ Gran Defensor', color: 'bg-cyan-950/90 text-cyan-300 border-cyan-700/80' },
+      { id: 'construccion', label: '🔨 Requiere Construcción', color: 'bg-amber-900/80 text-amber-200 border-amber-600' },
+      { id: 'polvos',     label: '💎 Polvos Primordiales', color: 'bg-sky-950/90 text-sky-300 border-sky-700/80' },
+      { id: 'hasta6',     label: '🟦 Disponible Hasta 6 Estrellas', color: 'bg-blue-900/80 text-blue-200 border-blue-600' },
+      { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', color: 'bg-red-900/80 text-red-200 border-red-600' }
     ];
 
+    // ORDEN EXACTO SOLICITADO DE ARRIBA A ABAJO
     const TIERS = [
-      { id: 'GOAT',    name: 'GOAT TIER',  color: 'from-amber-400 via-yellow-500 to-amber-600 text-black border-yellow-400' },
-      { id: 'GOD',     name: 'GOD TIER',   color: 'from-purple-600 via-indigo-600 to-purple-700 text-white border-purple-500' },
-      { id: 'DEMIGOD', name: 'DEMI-GOD',   color: 'from-blue-600 via-cyan-600 to-blue-700 text-white border-cyan-500' },
-      { id: 'UTILITY', name: 'MUY ÚTILES', color: 'from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-500' }
+      { id: 'GOAT',        name: 'GOAT TIER',        color: 'from-amber-400 via-yellow-500 to-amber-600 text-black border-yellow-400' },
+      { id: 'GOD',         name: 'GOD TIER',         color: 'from-purple-600 via-indigo-600 to-purple-700 text-white border-purple-500' },
+      { id: 'SEMIGOD',     name: 'SEMI-GOD TIER',    color: 'from-blue-600 via-cyan-600 to-blue-700 text-white border-cyan-500' },
+      { id: 'USABLES',     name: 'USABLES TIER',     color: 'from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-500' },
+      { id: 'OCASIONALES', name: 'OCASIONALES TIER', color: 'from-orange-600 via-amber-700 to-orange-800 text-white border-orange-500' },
+      { id: 'MEME',        name: 'MEME TIER',        color: 'from-red-700 via-rose-900 to-red-950 text-white border-red-600' }
     ];
 
     const CLASES = [
@@ -261,54 +261,17 @@
       { id: 'Tecnologico', label: 'TECNOLÓGICOS', headerStyle: 'bg-blue-950/40 text-blue-400 border-blue-700/50' }
     ];
 
-    const DEFAULT_CHARACTERS = [
-      { id: 'c1', name: 'Onslaught', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'defensor'], notes: 'Dominante en ataque y defensa. Daño de neurochoque brutal.', youtube: '', img: '' },
-      { id: 'c2', name: 'Capitana Britania', clase: 'Mutante', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c3', name: 'Jean Grey', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c4', name: 'Mister Siniestro', clase: 'Mutante', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'inmunidad', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c5', name: 'Kitty Pride', clase: 'Mutante', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'inmunidad'], notes: '', youtube: '', img: '' },
-      { id: 'c6', name: 'Okoye', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica'], notes: '', youtube: '', img: '' },
-      { id: 'c7', name: 'Doctor Bong', clase: 'Habil', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c8', name: 'Kingpin', clase: 'Habil', tier: 'GOAT', tags: ['duplica', 'inmunidad', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c9', name: 'Lumatrix', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica', 'reliquia', 'rotacion', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c10', name: 'Nick Fury', clase: 'Habil', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c11', name: 'Black Tarantula', clase: 'Habil', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'reliquia'], notes: '', youtube: '', img: '' },
-      { id: 'c12', name: 'Spider-Woman', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
-      { id: 'c13', name: 'Conde Nefaria', clase: 'Cientifico', tier: 'GOAT', tags: ['top7', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c14', name: 'She-Hulk Deathless', clase: 'Cientifico', tier: 'GOAT', tags: ['exclusivo', 'reliquia'], notes: '', youtube: '', img: '' },
-      { id: 'c15', name: 'Escorpión', clase: 'Cientifico', tier: 'GOAT', tags: ['sinergia', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c16', name: 'Spider-Ham', clase: 'Cientifico', tier: 'GOAT', tags: ['ascenso', 'top7', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c17', name: 'Kushala', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c18', name: 'Nico Minoru', clase: 'Mistico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c19', name: 'Spider-Man Pavitr', clase: 'Mistico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c20', name: 'Madelyne Pryor', clase: 'Mistico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c21', name: 'Doctor Strange', clase: 'Mistico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c22', name: 'Serpiente', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c23', name: 'Thanos Deathless', clase: 'Cosmico', tier: 'GOAT', tags: ['exclusivo', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
-      { id: 'c24', name: 'Vox', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
-      { id: 'c25', name: 'Hulkling', clase: 'Cosmico', tier: 'GOAT', tags: ['duplica', 'altasing', 'rotacion', 'defensor'], notes: '', youtube: '', img: '' },
-      { id: 'c26', name: 'Karolina Dean', clase: 'Cosmico', tier: 'GOAT', tags: ['top7', 'rotacion'], notes: '', youtube: '', img: '' },
-      { id: 'c27', name: 'Phyla-Vell', clase: 'Cosmico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing'], notes: '', youtube: '', img: '' },
-      { id: 'c28', name: 'Gwenom', clase: 'Cosmico', tier: 'GOAT', tags: ['ascenso', 'duplica', 'altasing', 'reliquia'], notes: '', youtube: '', img: '' },
-      { id: 'c29', name: 'Carina', clase: 'Cosmico', tier: 'GOAT', tags: ['ascenso', 'exclusivo', 'duplica', 'altasing'], notes: '', youtube: '', img: '' }
-    ];
-
     let characters = [];
     let activeFilters = [];
     let isAdmin = false;
     let sortableInstances = [];
-    let firestoreLoadedEmpty = false;
 
     // =========================================================================
-    // 3. AUTENTICACIÓN CON CORREO Y CONTRASEÑA (thesoriplayer@gmail.com)
+    // AUTENTICACIÓN
     // =========================================================================
     auth.onAuthStateChanged(user => {
       if (user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         setAdminMode(true, user.email);
-        if (firestoreLoadedEmpty) {
-          persistChanges();
-          firestoreLoadedEmpty = false;
-        }
       } else if (user) {
         alert(`Acceso denegado: Solo ${ADMIN_EMAIL} tiene permisos de administrador.`);
         auth.signOut();
@@ -349,14 +312,13 @@
 
       btn.innerText = 'Verificando...';
       btn.disabled = true;
-      errEl.classList.add('hidden');
 
       auth.signInWithEmailAndPassword(email, pass)
         .then(() => {
           closeLoginModal();
         })
-        .catch(err => {
-          errEl.innerText = 'Error: Correo o contraseña incorrectos (o falta crear el usuario en Firebase Auth).';
+        .catch(() => {
+          errEl.innerText = 'Error: Correo o contraseña incorrectos.';
           errEl.classList.remove('hidden');
         })
         .finally(() => {
@@ -389,44 +351,36 @@
     }
 
     // =========================================================================
-    // 4. CARGA Y GUARDADO DE DATOS EN TIEMPO REAL (FIRESTORE)
+    // CARGA Y GUARDADO DE DATOS
     // =========================================================================
     function initData() {
       renderFilterBar();
       renderFormTagCheckboxes();
 
       db.collection('tierlist').doc('main').onSnapshot(doc => {
-        if (doc.exists && doc.data().characters && doc.data().characters.length > 0) {
+        if (doc.exists && doc.data().characters) {
           characters = doc.data().characters;
-          firestoreLoadedEmpty = false;
         } else {
-          characters = DEFAULT_CHARACTERS;
-          firestoreLoadedEmpty = true;
-          if (isAdmin) persistChanges();
+          characters = [];
         }
         renderBoard();
-      }, err => {
-        console.warn("Cargando base local mientras se activa Firestore:", err.message);
-        const backup = localStorage.getItem('mcoc_tierlist_backup');
-        characters = backup ? JSON.parse(backup) : DEFAULT_CHARACTERS;
+      }, () => {
+        characters = [];
         renderBoard();
       });
     }
 
     function persistChanges() {
-      localStorage.setItem('mcoc_tierlist_backup', JSON.stringify(characters));
       if (isAdmin) {
         db.collection('tierlist').doc('main').set({
           characters: characters,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(err => {
-          alert("Error guardando en Firestore: " + err.message);
-        });
+        }).catch(err => console.error("Error guardando en Firestore:", err));
       }
     }
 
     // =========================================================================
-    // 5. RENDERIZADO DE TIERS (BANNER ARRIBA + 6 CLASES DEBAJO)
+    // RENDERIZADO
     // =========================================================================
     function renderBoard() {
       const container = document.getElementById('tiersContainer');
@@ -520,7 +474,7 @@
     }
 
     // =========================================================================
-    // 6. FILTROS COINCIDENTES Y DRAG & DROP
+    // FILTROS Y DRAG & DROP
     // =========================================================================
     function renderFilterBar() {
       const bar = document.getElementById('filterBar');
@@ -595,7 +549,7 @@
     }
 
     // =========================================================================
-    // 7. MODALES (AÑADIR/EDITAR Y VER DETALLE CON YOUTUBE)
+    // MODALES
     // =========================================================================
     function renderFormTagCheckboxes() {
       const container = document.getElementById('formTagsContainer');
