@@ -35,12 +35,18 @@
     .char-card:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6); }
     .drop-zone { min-height: 80px; }
     .sortable-ghost { opacity: 0.35; border: 2px dashed #a855f7; }
+
+    /* Barras de scroll personalizadas y discretas */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0b0c10; }
+    ::-webkit-scrollbar-thumb { background: #262936; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3f445a; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="h-screen overflow-hidden flex flex-col">
 
-  <!-- BARRA SUPERIOR -->
-  <header class="bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-3.5 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-30">
+  <!-- BARRA SUPERIOR FIJA -->
+  <header class="bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-3 flex flex-wrap justify-between items-center gap-3 flex-shrink-0 z-30">
     <div class="flex items-center gap-3">
       <span class="text-xl md:text-2xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
         MCOC TIER LIST
@@ -51,26 +57,29 @@
     </div>
 
     <div class="flex items-center gap-2.5">
-      <button id="btnAddChar" onclick="openFormModal()" class="hidden bg-purple-600 hover:bg-purple-500 text-white font-semibold px-3.5 py-2 rounded-lg text-xs md:text-sm transition">
+      <button onclick="toggleFilterPanel()" id="btnToggleFilters" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs font-medium transition">
+        🔼 Ocultar Filtros
+      </button>
+
+      <button id="btnAddChar" onclick="openFormModal()" class="hidden bg-purple-600 hover:bg-purple-500 text-white font-semibold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition">
         + Añadir Personaje
       </button>
 
-      <button id="btnAdminAuth" onclick="handleAuthButtonClick()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 px-3.5 py-2 rounded-lg text-xs md:text-sm font-medium transition">
+      <button id="btnAdminAuth" onclick="handleAuthButtonClick()" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 px-3.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition">
         🔒 Acceso Admin
       </button>
     </div>
   </header>
 
-  <!-- BARRAS DE FILTROS SUPERIORES -->
-  <section class="bg-gray-900/80 border-b border-gray-800 px-6 py-3 space-y-2.5">
-    <div class="flex flex-wrap items-center gap-2">
+  <!-- BARRAS DE FILTROS SUPERIORES (PLEGABLES Y CON SCROLL MÁXIMO PARA NO QUITAR ESPACIO) -->
+  <section id="filtersSection" class="bg-gray-900/80 border-b border-gray-800 px-6 py-2.5 space-y-2 flex-shrink-0 max-h-44 overflow-y-auto">
+    <div class="flex flex-wrap items-center gap-1.5">
       <span class="text-xs font-bold uppercase tracking-wider text-purple-400 mr-1">Filtro Etiquetas TIER LIST:</span>
       <div id="filterBarTier" class="flex flex-wrap gap-1.5"></div>
     </div>
-    <!-- Filtros del juego ordenados por grupos y alfabéticamente / cronológicamente -->
     <div class="space-y-1.5">
       <span class="text-xs font-bold uppercase tracking-wider text-sky-400">Filtro Etiquetas del Juego (por grupos):</span>
-      <div id="filterBarGameGroups" class="space-y-2"></div>
+      <div id="filterBarGameGroups" class="space-y-1.5"></div>
     </div>
     <div>
       <button id="btnClearFilters" onclick="clearFilters()" class="hidden text-xs text-red-400 hover:text-red-300 underline mt-1">
@@ -79,37 +88,44 @@
     </div>
   </section>
 
-  <!-- CONTENEDOR PRINCIPAL -->
-  <div class="flex flex-1 overflow-hidden">
-    <main class="flex-1 p-4 md:p-6 overflow-x-auto overflow-y-auto">
-      <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto"></div>
+  <!-- CONTENEDOR PRINCIPAL: TIER LIST CON SCROLL INDEPENDIENTE + PANEL ADMIN INMÓVIL -->
+  <div class="flex flex-1 min-h-0 overflow-hidden">
+    
+    <!-- ZONA DE TIERS (Única zona que hace scroll de GOAT TIER a MEME TIER) -->
+    <main id="tiersScrollArea" class="flex-1 h-full p-4 md:p-6 overflow-y-auto overflow-x-auto">
+      <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto pb-12"></div>
     </main>
 
-    <!-- MENÚ LATERAL DERECHO ADMIN -->
-    <aside id="sidebarBench" class="w-80 bg-gray-900 border-l border-gray-800 p-4 flex flex-col hidden space-y-4 overflow-y-auto">
-      <div class="flex flex-col">
-        <div class="mb-1.5 flex items-center justify-between">
+    <!-- MENÚ LATERAL DERECHO ADMIN (100% INMÓVIL EN PANTALLA) -->
+    <aside id="sidebarBench" class="w-80 h-full bg-gray-900 border-l border-gray-800 p-3.5 flex flex-col gap-3 hidden flex-shrink-0 overflow-hidden">
+      
+      <!-- 1. Nuevos Personajes -->
+      <div class="flex flex-col flex-1 min-h-0">
+        <div class="mb-1.5 flex items-center justify-between flex-shrink-0">
           <span class="text-xs font-bold text-white">📥 Nuevos Personajes</span>
           <span id="benchCount1" class="bg-purple-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
         </div>
-        <div id="benchDropZone1" data-tier="BENCH" data-clase="ALL" data-sub="bench1" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
+        <div id="benchDropZone1" data-tier="BENCH" data-clase="ALL" data-sub="bench1" class="drop-zone flex-1 bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 overflow-y-auto"></div>
       </div>
 
-      <div class="flex flex-col">
-        <div class="mb-1.5 flex items-center justify-between">
+      <!-- 2. Nuevas Ascension+ -->
+      <div class="flex flex-col flex-1 min-h-0">
+        <div class="mb-1.5 flex items-center justify-between flex-shrink-0">
           <span class="text-xs font-bold text-white">⬆️ Nuevas Ascension+</span>
           <span id="benchCount2" class="bg-blue-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
         </div>
-        <div id="benchDropZone2" data-tier="BENCH" data-clase="ALL" data-sub="bench2" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
+        <div id="benchDropZone2" data-tier="BENCH" data-clase="ALL" data-sub="bench2" class="drop-zone flex-1 bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 overflow-y-auto"></div>
       </div>
 
-      <div class="flex flex-col">
-        <div class="mb-1.5 flex items-center justify-between">
+      <!-- 3. Nuevos 7 Estrellas -->
+      <div class="flex flex-col flex-1 min-h-0">
+        <div class="mb-1.5 flex items-center justify-between flex-shrink-0">
           <span class="text-xs font-bold text-white">💜 Nuevos 7 Estrellas</span>
           <span id="benchCount3" class="bg-indigo-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
         </div>
-        <div id="benchDropZone3" data-tier="BENCH" data-clase="ALL" data-sub="bench3" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
+        <div id="benchDropZone3" data-tier="BENCH" data-clase="ALL" data-sub="bench3" class="drop-zone flex-1 bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 overflow-y-auto"></div>
       </div>
+
     </aside>
   </div>
 
@@ -338,6 +354,13 @@
       return ch.tierTags || ch.tags || [];
     }
 
+    function toggleFilterPanel() {
+      const sec = document.getElementById('filtersSection');
+      const btn = document.getElementById('btnToggleFilters');
+      const isHidden = sec.classList.toggle('hidden');
+      btn.innerText = isHidden ? '🔽 Mostrar Filtros' : '🔼 Ocultar Filtros';
+    }
+
     // =========================================================================
     // ORDENACIÓN ALFABÉTICA Y CRONOLÓGICA (MÁS ANTIGUOS PRIMERO SI TIENE NÚMEROS)
     // =========================================================================
@@ -346,21 +369,15 @@
         const cleanA = a.replace(/^#/, '').trim();
         const cleanB = b.replace(/^#/, '').trim();
 
-        const numMatchA = cleanA.match(/\d+/);
-        const numMatchB = cleanB.match(/\d+/);
-
         const isPureNumA = /^\d+$/.test(cleanA);
         const isPureNumB = /^\d+$/.test(cleanB);
 
-        // Si ambos son números puros (ej: #2017 vs #2023), van los más antiguos primero
         if (isPureNumA && isPureNumB) {
           return parseInt(cleanA, 10) - parseInt(cleanB, 10);
         }
-        // Si uno es un año/número puro y el otro texto, los números van antes
         if (isPureNumA && !isPureNumB) return -1;
         if (!isPureNumA && isPureNumB) return 1;
 
-        // Comparación natural en español: ordena A-Z e interpreta números internos de menor a mayor
         return cleanA.localeCompare(cleanB, 'es', { numeric: true, sensitivity: 'base' });
       });
     }
@@ -625,14 +642,13 @@
         if (tagSet && tagSet.size > 0) {
           hasAnyGameTag = true;
           const groupRow = document.createElement('div');
-          groupRow.className = 'flex flex-wrap items-center gap-1.5 bg-gray-950/40 p-2 rounded-lg border border-gray-800/80 text-xs';
+          groupRow.className = 'flex flex-wrap items-center gap-1.5 bg-gray-950/40 p-1.5 rounded-lg border border-gray-800/80 text-xs';
           
           const gLabel = document.createElement('span');
-          gLabel.className = 'font-bold text-sky-400 uppercase mr-2 min-w-[150px]';
+          gLabel.className = 'font-bold text-sky-400 uppercase mr-2 min-w-[140px]';
           gLabel.innerText = groupName + ':';
           groupRow.appendChild(gLabel);
 
-          // Ordenar alfabéticamente y cronológicamente (más antiguos primero)
           const sortedTags = sortGameTags(Array.from(tagSet));
 
           sortedTags.forEach(tagName => {
@@ -698,6 +714,9 @@
           animation: 150,
           disabled: !isAdmin,
           ghostClass: 'sortable-ghost',
+          scroll: true, // Auto-scroll al arrastrar hacia los bordes de la Tier List
+          scrollSensitivity: 80,
+          scrollSpeed: 16,
           onEnd: function (evt) {
             const charId = evt.item.dataset.id;
             const targetTier = evt.to.dataset.tier;
