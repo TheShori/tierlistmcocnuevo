@@ -23,8 +23,8 @@
     .clase-Tecnologico { border-left: 4px solid #3b82f6; background: linear-gradient(90deg, rgba(59,130,246,0.12) 0%, rgba(17,24,39,0.95) 100%); }
 
     .char-card { transition: transform 0.12s ease, box-shadow 0.12s ease; cursor: pointer; user-select: none; }
-    .char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.65); }
-    .drop-zone { min-height: 100px; }
+    .char-card:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6); }
+    .drop-zone { min-height: 80px; }
     .sortable-ghost { opacity: 0.35; border: 2px dashed #a855f7; }
   </style>
 </head>
@@ -78,7 +78,7 @@
           <span class="text-xs font-bold text-white">📥 Nuevos Personajes</span>
           <span id="benchCount1" class="bg-purple-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
         </div>
-        <div id="benchDropZone1" data-tier="BENCH" data-clase="ALL" data-sub="bench1" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[90px] overflow-y-auto"></div>
+        <div id="benchDropZone1" data-tier="BENCH" data-clase="ALL" data-sub="bench1" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
       </div>
 
       <!-- 2. Nuevas Ascension+ -->
@@ -87,7 +87,7 @@
           <span class="text-xs font-bold text-white">⬆️ Nuevas Ascension+</span>
           <span id="benchCount2" class="bg-blue-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
         </div>
-        <div id="benchDropZone2" data-tier="BENCH" data-clase="ALL" data-sub="bench2" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[90px] overflow-y-auto"></div>
+        <div id="benchDropZone2" data-tier="BENCH" data-clase="ALL" data-sub="bench2" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
       </div>
 
       <!-- 3. Nuevos 7 Estrellas -->
@@ -96,7 +96,7 @@
           <span class="text-xs font-bold text-white">💜 Nuevos 7 Estrellas</span>
           <span id="benchCount3" class="bg-indigo-600 text-[10px] px-2 py-0.5 rounded-full">0</span>
         </div>
-        <div id="benchDropZone3" data-tier="BENCH" data-clase="ALL" data-sub="bench3" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[90px] overflow-y-auto"></div>
+        <div id="benchDropZone3" data-tier="BENCH" data-clase="ALL" data-sub="bench3" class="drop-zone bg-gray-950/80 border-2 border-dashed border-gray-800 rounded-xl p-2 space-y-1.5 min-h-[80px] overflow-y-auto"></div>
       </div>
 
     </aside>
@@ -200,7 +200,6 @@
       </div>
 
       <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-        <!-- Lista de etiquetas detalladas con Nombre y Emoji al abrir -->
         <div>
           <h4 class="text-xs font-bold uppercase tracking-wider text-purple-400 mb-2">Etiquetas del Personaje</h4>
           <div id="detailTags" class="flex flex-wrap gap-1.5"></div>
@@ -211,7 +210,6 @@
           <p id="detailNotes" class="text-gray-200 text-sm whitespace-pre-line bg-gray-950/70 p-3.5 rounded-xl border border-gray-800"></p>
         </div>
 
-        <!-- Botón de Redirección a YouTube -->
         <div id="detailVideoSection" class="hidden">
           <a id="detailYoutubeBtn" href="#" target="_blank" class="w-full bg-red-600 hover:bg-red-500 text-white font-semibold px-4 py-3 rounded-xl flex items-center justify-center gap-2 text-sm transition shadow-lg">
             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
@@ -436,7 +434,7 @@
 
         CLASES.forEach(cl => {
           const cell = document.createElement('div');
-          cell.className = 'drop-zone bg-gray-950/60 rounded-xl p-2 border border-gray-800/70 space-y-2 flex flex-col';
+          cell.className = 'drop-zone bg-gray-950/60 rounded-xl p-1.5 border border-gray-800/70 space-y-1.5 flex flex-col';
           cell.dataset.tier = tier.id;
           cell.dataset.clase = cl.id;
 
@@ -450,7 +448,6 @@
         container.appendChild(tierSection);
       });
 
-      // Renderizar las 3 secciones del banquillo lateral en Modo Admin
       const bench1 = document.getElementById('benchDropZone1');
       const bench2 = document.getElementById('benchDropZone2');
       const bench3 = document.getElementById('benchDropZone3');
@@ -476,36 +473,44 @@
 
     function createCharCard(ch) {
       const card = document.createElement('div');
-      card.className = `char-card clase-${ch.clase} rounded-lg p-2.5 text-xs flex items-center justify-between gap-2 bg-gray-900 shadow-sm border border-gray-800/80`;
+      // Tarjeta más delgada con padding vertical y horizontal ajustado
+      card.className = `char-card clase-${ch.clase} rounded-md px-2 py-1.5 text-xs flex items-center justify-between gap-1.5 bg-gray-900 shadow-sm border border-gray-800/80`;
       card.dataset.id = ch.id;
       card.onclick = () => openDetailModal(ch.id);
 
       const left = document.createElement('div');
-      left.className = 'flex items-center gap-2 truncate';
+      left.className = 'flex items-center gap-1.5 min-w-0 flex-1';
 
       if (ch.img) {
         const avatar = document.createElement('img');
         avatar.src = ch.img;
-        avatar.className = 'w-6 h-6 rounded-full object-cover flex-shrink-0 border border-gray-600';
+        avatar.className = 'w-5 h-5 rounded-full object-cover flex-shrink-0 border border-gray-600';
         left.appendChild(avatar);
       }
 
       const nameSpan = document.createElement('span');
       const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
-      nameSpan.className = `font-bold text-xs truncate ${hasYoutube ? 'text-red-400 font-extrabold' : 'text-gray-100'}`;
+      
+      // Tamaño de fuente adaptable (más pequeño para nombres largos) para evitar que salte de línea
+      const nameLength = ch.name ? ch.name.length : 0;
+      let textSize = 'text-[11px]';
+      if (nameLength > 12) textSize = 'text-[10px]';
+      if (nameLength > 16) textSize = 'text-[9px]';
+
+      nameSpan.className = `font-bold whitespace-nowrap overflow-hidden text-ellipsis flex-shrink ${textSize} ${hasYoutube ? 'text-red-400 font-extrabold' : 'text-gray-100'}`;
       nameSpan.innerText = ch.name;
       left.appendChild(nameSpan);
       card.appendChild(left);
 
-      // Solo mostrar los emojis de las etiquetas asignadas al lado del nombre en la tarjeta principal
+      // Emojis de etiquetas en la misma línea
       if (ch.tags && ch.tags.length > 0) {
         const emojisWrap = document.createElement('div');
-        emojisWrap.className = 'flex items-center gap-1 flex-shrink-0';
+        emojisWrap.className = 'flex items-center gap-0.5 flex-shrink-0';
         ch.tags.forEach(tagId => {
           const tagObj = AVAILABLE_TAGS.find(t => t.id === tagId);
           if (tagObj) {
             const emojiSpan = document.createElement('span');
-            emojiSpan.className = 'text-xs';
+            emojiSpan.className = 'text-[11px] leading-none';
             emojiSpan.innerText = tagObj.emoji;
             emojisWrap.appendChild(emojiSpan);
           }
@@ -569,7 +574,7 @@
             const charId = evt.item.dataset.id;
             const targetTier = evt.to.dataset.tier;
             const targetClase = evt.to.dataset.clase;
-            const targetSub = evt.to.dataset.sub; // Si se suelta en una subsección del banquillo
+            const targetSub = evt.to.dataset.sub;
 
             const charObj = characters.find(c => c.id === charId);
             if (!charObj) return;
@@ -682,7 +687,6 @@
       document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
       document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
 
-      // Al abrir la ficha, mostrar nombre y emoji completo de cada etiqueta asignada
       const tagsContainer = document.getElementById('detailTags');
       tagsContainer.innerHTML = '';
       (ch.tags || []).forEach(tagId => {
