@@ -42,14 +42,13 @@
 </head>
 <body class="h-screen overflow-hidden flex flex-col">
 
-  <!-- BARRA SUPERIOR CON PESTAÑAS (TIER LIST vs PRESTIGIO) -->
+  <!-- BARRA SUPERIOR CON PESTAÑAS -->
   <header class="bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-3 flex flex-wrap justify-between items-center gap-3 flex-shrink-0 z-30">
     <div class="flex items-center gap-4">
       <span class="text-xl md:text-2xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
         THESHORI MCOC
       </span>
 
-      <!-- Selector de Pestaña Principal -->
       <div class="flex bg-gray-950 p-1 rounded-xl border border-gray-800">
         <button id="tabBtnTier" onclick="switchMainView('tierlist')" class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition bg-purple-600 text-white shadow">
           📊 Tier List
@@ -88,7 +87,7 @@
     </div>
   </header>
 
-  <!-- BARRAS DE FILTROS SUPERIORES (PARA TIER LIST) -->
+  <!-- BARRAS DE FILTROS SUPERIORES -->
   <section id="filtersSection" class="bg-gray-900/80 border-b border-gray-800 px-6 py-2.5 space-y-2 flex-shrink-0 max-h-44 overflow-y-auto">
     <div class="flex flex-wrap items-center gap-1.5">
       <span class="text-xs font-bold uppercase tracking-wider text-purple-400 mr-1">Filtro Etiquetas TIER LIST:</span>
@@ -138,7 +137,7 @@
     </aside>
   </div>
 
-  <!-- VISTA 2: RANKING DE PRESTIGIO (6 RANGOS EN X200) -->
+  <!-- VISTA 2: RANKING DE PRESTIGIO -->
   <div id="viewPrestige" class="hidden flex-1 min-h-0 overflow-y-auto p-4 md:p-6">
     <div class="max-w-7xl mx-auto space-y-5 pb-12">
       
@@ -225,22 +224,22 @@
     </div>
   </div>
 
-  <!-- MODAL IMPORTACIÓN MASIVA DE PRESTIGIOS (MAPEO INGLÉS -> ESPAÑOL) -->
+  <!-- MODAL IMPORTACIÓN MASIVA DIRECTA DESDE MCOC.GG -->
   <div id="importModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex justify-between items-center mb-3">
-        <h3 class="text-lg font-bold text-emerald-400">📥 Importación Masiva de Prestigios</h3>
+        <h3 class="text-lg font-bold text-emerald-400">📥 Importación Rápida de Prestigios (mcoc.gg)</h3>
         <button onclick="closeImportModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
       </div>
       <p class="text-xs text-gray-300 mb-3 leading-relaxed">
-        Pega aquí los datos o la lista (en formato JSON o texto con nombres en inglés de <code>mcoc.gg</code>). El script traducirá automáticamente los nombres al español mediante la tabla de equivalencias y actualizará los prestigios de golpe.
+        Selecciona y copia directamente el texto desde la tabla de <strong>mcoc.gg</strong> (aunque los números aparezcan juntos) y pégalo aquí abajo. El sistema detectará automáticamente cada personaje, sus 6 rangos y traducirá su nombre al español.
       </p>
       
-      <textarea id="importTextarea" rows="10" placeholder='Ejemplo de formato o JSON:&#10;[{"name": "Captain Britain", "r5_a2": 39400, "r5_a1": 36100, "r5_base": 33000, "r4_a2": 31500, "r4_a1": 29000, "r4_base": 26800}, ...]' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
+      <textarea id="importTextarea" rows="12" placeholder='Pega aquí el bloque copiado directamente de mcoc.gg...' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
 
       <div class="flex justify-end gap-2">
         <button onclick="closeImportModal()" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs">Cancelar</button>
-        <button onclick="executeMassiveImport()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Procesar e Inyectar en Firebase</button>
+        <button onclick="executeMcocGgImport()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Analizar y Actualizar Firebase</button>
       </div>
     </div>
   </div>
@@ -490,7 +489,6 @@
       'r4_base'
     ];
 
-    // Tabla de traducción automática Inglés -> Español para mapear mcoc.gg
     const EN_TO_ES_NAMES = {
       "captain britain": "Capitana Britania",
       "mister sinister": "Mister Siniestro",
@@ -702,7 +700,7 @@
     }
 
     // =========================================================================
-    // IMPORTACIÓN MASIVA DE PRESTIGIOS (MAPEO INGLÉS -> ESPAÑOL)
+    // ANALIZADOR INTELIGENTE DE TEXTO COPIADO DESDE MCOC.GG
     // =========================================================================
     function openImportModal() {
       document.getElementById('importTextarea').value = '';
@@ -715,70 +713,85 @@
       document.getElementById('importModal').classList.remove('flex');
     }
 
-    function executeMassiveImport() {
+    function executeMcocGgImport() {
       const rawText = document.getElementById('importTextarea').value.trim();
       if (!rawText) {
-        alert("Por favor, pega los datos de prestigio.");
+        alert("Por favor, pega el bloque copiado desde mcoc.gg.");
         return;
       }
 
       try {
-        let importedList = [];
-        if (rawText.startsWith('[') || rawText.startsWith('{')) {
-          const parsed = JSON.parse(rawText);
-          importedList = Array.isArray(parsed) ? parsed : [parsed];
-        } else {
-          // Si se pega como líneas de texto separadas por tabuladores o comas
-          const lines = rawText.split('\n');
-          lines.forEach(line => {
-            const parts = line.split(/[\t,]+/);
-            if (parts.length >= 7) {
-              importedList.push({
-                name: parts[0].trim(),
-                r5_a2: Number(parts[1]) || 0,
-                r5_a1: Number(parts[2]) || 0,
-                r5_base: Number(parts[3]) || 0,
-                r4_a2: Number(parts[4]) || 0,
-                r4_a1: Number(parts[5]) || 0,
-                r4_base: Number(parts[6]) || 0
-              });
-            }
-          });
-        }
-
-        if (importedList.length === 0) {
-          alert("No se han podido interpretar los datos. Comprueba el formato.");
-          return;
-        }
-
+        const lines = rawText.split('\n');
         let updatedCount = 0;
-        importedList.forEach(item => {
-          if (!item.name) return;
-          const cleanNameEn = item.name.toLowerCase().trim();
-          const translatedNameEs = EN_TO_ES_NAMES[cleanNameEn] || item.name;
+        let i = 0;
 
-          // Buscar personaje en la base de datos (por coincidencia exacta en español o traducido)
-          let charObj = characters.find(c => c.name.toLowerCase().trim() === translatedNameEs.toLowerCase().trim() || c.name.toLowerCase().trim() === cleanNameEn);
-
-          if (charObj) {
-            charObj.prestige = {
-              r5_a2: Number(item.r5_a2) || 0,
-              r5_a1: Number(item.r5_a1) || 0,
-              r5_base: Number(item.r5_base) || 0,
-              r4_a2: Number(item.r4_a2) || 0,
-              r4_a1: Number(item.r4_a1) || 0,
-              r4_base: Number(item.r4_base) || 0
-            };
-            updatedCount++;
+        // El texto pegado desde mcoc.gg agrupa en líneas consecutivas: Nombre, PrestigioMax Rank, y luego los 6 números de rangos
+        while (i < lines.length) {
+          let line = lines[i].trim();
+          if (!line || line.startsWith("Champion") || line.startsWith("Prestige") || line.includes("Obtainable")) {
+            i++;
+            continue;
           }
-        });
+
+          // Detectar nombre del personaje (línea que no sea puramente un número de prestigio)
+          let charNameRaw = line;
+          i++;
+
+          // Recoger los siguientes números de prestigio
+          let numbersFound = [];
+          while (i < lines.length && numbersFound.length < 6) {
+            let nextLine = lines[i].trim();
+            // Limpiar comas y puntos de los números de mcoc.gg (ej: "34,330" -> 34330)
+            let cleanedNum = nextLine.replace(/[,.]/g, '');
+            if (/^\d{4,6}$/.test(cleanedNum)) {
+              numbersFound.push(Number(cleanedNum));
+              i++;
+            } else if (nextLine === '--' || nextLine === '-') {
+              numbersFound.push(0);
+              i++;
+            } else {
+              // Si nos encontramos con texto o ranking (ej: "47,4601" o "T10"), intentamos extraer el número principal si lo tiene pegado
+              let matchRankNum = nextLine.match(/^(\d{2}[,.]?\d{3})[A-Za-z0-9]*$/);
+              if (matchRankNum) {
+                // Es la línea con el prestigio max y el rank juntos (ej: "47,4601")
+                // En este caso mcoc.gg pega en orden inverso o directo según tabla. Vamos a procesarlo con seguridad.
+                i++;
+              } else {
+                break;
+              }
+            }
+          }
+
+          if (charNameRaw && numbersFound.length > 0) {
+            // Limpiar sufijos de ranking pegados en el nombre (ej: "Baron Zemo46,830T10" o "Onslaught40,590114")
+            charNameRaw = charNameRaw.replace(/\d{2,5}[,\.]?\d{3}.*$/, '').trim();
+            
+            const cleanNameEn = charNameRaw.toLowerCase().trim();
+            const translatedNameEs = EN_TO_ES_NAMES[cleanNameEn] || charNameRaw;
+
+            let charObj = characters.find(c => c.name.toLowerCase().trim() === translatedNameEs.toLowerCase().trim() || c.name.toLowerCase().trim() === cleanNameEn);
+
+            if (charObj && numbersFound.length >= 6) {
+              // mcoc.gg devuelve los 6 rangos en orden: [R4-200, R4-A1, R4-A2, R5, R5-A1, R5-A2] o similar
+              charObj.prestige = {
+                r4_base: numbersFound[0] || 0,
+                r4_a1:   numbersFound[1] || 0,
+                r4_a2:   numbersFound[2] || 0,
+                r5_base: numbersFound[3] || 0,
+                r5_a1:   numbersFound[4] || 0,
+                r5_a2:   numbersFound[5] || 0
+              };
+              updatedCount++;
+            }
+          }
+        }
 
         persistChanges();
         closeImportModal();
         if (currentMainView === 'prestige') renderPrestigeView();
-        alert(`¡Importación completada con éxito! Se han actualizado ${updatedCount} personajes.`);
+        alert(`¡Importación rápida completada! Se han actualizado con éxito ${updatedCount} personajes.`);
       } catch (err) {
-        alert("Error al procesar el JSON o texto: " + err.message);
+        alert("Error al interpretar el texto de mcoc.gg: " + err.message);
       }
     }
 
