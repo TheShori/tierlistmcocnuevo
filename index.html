@@ -224,7 +224,7 @@
     </div>
   </div>
 
-  <!-- MODAL IMPORTACIÓN MASIVA DIRECTA DESDE MCOC.GG -->
+  <!-- MODAL IMPORTACIÓN MASIVA DESDE MCOC.GG (LIMPIEZA DE PUESTOS) -->
   <div id="importModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex justify-between items-center mb-3">
@@ -232,10 +232,10 @@
         <button onclick="closeImportModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
       </div>
       <p class="text-xs text-gray-300 mb-3 leading-relaxed">
-        Selecciona y copia directamente el texto desde la tabla de <strong>mcoc.gg</strong> (aunque los números aparezcan juntos) y pégalo aquí abajo. El sistema detectará automáticamente cada personaje, sus 6 rangos y traducirá su nombre al español.
+        Pega aquí el bloque copiado directamente de la tabla de <strong>mcoc.gg</strong>. El nuevo script inteligente limpiará los puestos (como #1, #2, T10) y separará correctamente los 6 rangos de prestigio.
       </p>
       
-      <textarea id="importTextarea" rows="12" placeholder='Pega aquí el bloque copiado directamente de mcoc.gg...' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
+      <textarea id="importTextarea" rows="12" placeholder='Pega aquí el texto copiado de mcoc.gg...' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
 
       <div class="flex justify-end gap-2">
         <button onclick="closeImportModal()" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs">Cancelar</button>
@@ -616,7 +616,7 @@
 
       if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
         errEl.innerText = `Solo el correo ${ADMIN_EMAIL} está autorizado.`;
-        errEl.classList.remove('hidden');
+        errEl.classList.add('hidden');
         return;
       }
 
@@ -700,7 +700,7 @@
     }
 
     // =========================================================================
-    // ANALIZADOR INTELIGENTE DE TEXTO COPIADO DESDE MCOC.GG
+    // ANALIZADOR INTELIGENTE DE TEXTO COPIADO DESDE MCOC.GG (LIMPIEZA DE PUESTOS)
     // =========================================================================
     function openImportModal() {
       document.getElementById('importTextarea').value = '';
@@ -725,7 +725,6 @@
         let updatedCount = 0;
         let i = 0;
 
-        // El texto pegado desde mcoc.gg agrupa en líneas consecutivas: Nombre, PrestigioMax Rank, y luego los 6 números de rangos
         while (i < lines.length) {
           let line = lines[i].trim();
           if (!line || line.startsWith("Champion") || line.startsWith("Prestige") || line.includes("Obtainable")) {
@@ -733,15 +732,22 @@
             continue;
           }
 
-          // Detectar nombre del personaje (línea que no sea puramente un número de prestigio)
           let charNameRaw = line;
           i++;
 
-          // Recoger los siguientes números de prestigio
           let numbersFound = [];
-          while (i < lines.length && numbersFound.length < 6) {
+          while (i < lines.length && numbersFound.length < 7) {
             let nextLine = lines[i].trim();
-            // Limpiar comas y puntos de los números de mcoc.gg (ej: "34,330" -> 34330)
+            
+            // Si la línea tiene un número de prestigio con el puesto pegado al final (ej: "47,4601" o "46,830T10" o "18,220281")
+            let matchPegado = nextLine.match(/^(\d{2}[,.]?\d{3})([A-Za-z0-9]+)$/);
+            if (matchPegado) {
+              let numLimpio = matchPegado[1].replace(/[,.]/g, '');
+              numbersFound.push(Number(numLimpio));
+              i++;
+              continue;
+            }
+
             let cleanedNum = nextLine.replace(/[,.]/g, '');
             if (/^\d{4,6}$/.test(cleanedNum)) {
               numbersFound.push(Number(cleanedNum));
@@ -750,36 +756,29 @@
               numbersFound.push(0);
               i++;
             } else {
-              // Si nos encontramos con texto o ranking (ej: "47,4601" o "T10"), intentamos extraer el número principal si lo tiene pegado
-              let matchRankNum = nextLine.match(/^(\d{2}[,.]?\d{3})[A-Za-z0-9]*$/);
-              if (matchRankNum) {
-                // Es la línea con el prestigio max y el rank juntos (ej: "47,4601")
-                // En este caso mcoc.gg pega en orden inverso o directo según tabla. Vamos a procesarlo con seguridad.
-                i++;
-              } else {
-                break;
-              }
+              break;
             }
           }
 
           if (charNameRaw && numbersFound.length > 0) {
-            // Limpiar sufijos de ranking pegados en el nombre (ej: "Baron Zemo46,830T10" o "Onslaught40,590114")
+            // Limpiar sufijos o puestos numéricos que se hayan colado en el nombre
             charNameRaw = charNameRaw.replace(/\d{2,5}[,\.]?\d{3}.*$/, '').trim();
+            charNameRaw = charNameRaw.replace(/------$/, '').trim(); // Para los que salen con guiones en mcoc.gg
             
             const cleanNameEn = charNameRaw.toLowerCase().trim();
             const translatedNameEs = EN_TO_ES_NAMES[cleanNameEn] || charNameRaw;
 
             let charObj = characters.find(c => c.name.toLowerCase().trim() === translatedNameEs.toLowerCase().trim() || c.name.toLowerCase().trim() === cleanNameEn);
 
-            if (charObj && numbersFound.length >= 6) {
-              // mcoc.gg devuelve los 6 rangos en orden: [R4-200, R4-A1, R4-A2, R5, R5-A1, R5-A2] o similar
+            if (charObj && numbersFound.length >= 7) {
+              // El orden en mcoc.gg copiado suele ser: [MaxObtainable, R4-200, R4-A1-200, R4-A2-200, R5-200, R5-A1-200, R5-A2-200]
               charObj.prestige = {
-                r4_base: numbersFound[0] || 0,
-                r4_a1:   numbersFound[1] || 0,
-                r4_a2:   numbersFound[2] || 0,
-                r5_base: numbersFound[3] || 0,
-                r5_a1:   numbersFound[4] || 0,
-                r5_a2:   numbersFound[5] || 0
+                r4_base: numbersFound[1] || 0,
+                r4_a1:   numbersFound[2] || 0,
+                r4_a2:   numbersFound[3] || 0,
+                r5_base: numbersFound[4] || 0,
+                r5_a1:   numbersFound[5] || 0,
+                r5_a2:   numbersFound[6] || 0
               };
               updatedCount++;
             }
