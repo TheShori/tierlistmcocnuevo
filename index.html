@@ -55,7 +55,7 @@
           📊 Tier List
         </button>
         <button id="tabBtnPrestige" onclick="switchMainView('prestige')" class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition text-gray-400 hover:text-white">
-          🏆 Prestigio
+          🏆 Prestigio (x200)
         </button>
       </div>
 
@@ -136,30 +136,34 @@
   </div>
 
   <!-- =================================================================== -->
-  <!-- VISTA 2: RANKING Y CALCULADORA DE PRESTIGIO (ESTILO MCOC.GG)        -->
+  <!-- VISTA 2: RANKING DE PRESTIGIO (7★ R4 / R5 + ASCENSIONES EN X200)    -->
   <!-- =================================================================== -->
   <div id="viewPrestige" class="hidden flex-1 min-h-0 overflow-y-auto p-4 md:p-6">
-    <div class="max-w-6xl mx-auto space-y-5 pb-12">
+    <div class="max-w-7xl mx-auto space-y-5 pb-12">
       
       <!-- Panel de Control de Prestigio -->
       <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-lg space-y-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 class="text-lg md:text-xl font-extrabold text-amber-400 flex items-center gap-2">
-              🏆 Tabla Oficial de Prestigio MCOC
+              🏆 Tabla de Prestigio MCOC (Base Singularidad x200)
             </h2>
-            <p class="text-xs text-gray-400">Sincronizada con la base de datos de personajes del canal. Haz clic en cualquier luchador para ver su ficha y vídeo.</p>
+            <p class="text-xs text-gray-400">
+              Ordenada automáticamente empezando por <strong class="text-amber-300">7★ Rango 5 Ascensión 2</strong> (y en cascada hacia Rango 5 y Rango 4 si el personaje aún no tiene ese rango).
+            </p>
           </div>
 
           <!-- Selector de Rango de Ordenación Principal -->
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs font-bold text-gray-400 uppercase">Ordenar por:</span>
+            <span class="text-xs font-bold text-gray-400 uppercase">Prioridad de Orden:</span>
             <select id="prestigeSortSelect" onchange="renderPrestigeView()" class="bg-gray-950 border border-amber-500/50 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 focus:outline-none">
-              <option value="r4_7_sig200">7★ Rango 4 (Sig 200)</option>
-              <option value="r4_7_sig0">7★ Rango 4 (Sin Duplicar)</option>
-              <option value="r3_7_sig200">7★ Rango 3 (Sig 200)</option>
-              <option value="r3_7_sig0">7★ Rango 3 (Sin Duplicar)</option>
-              <option value="r5_6_asc">6★ Rango 5 Ascendido (Sig 200)</option>
+              <option value="cascade_r5a2">Automático: 7★ R5 Asc 2 ➔ R5 Asc 1 ➔ R5 ➔ R4</option>
+              <option value="r5_a2">7★ Rango 5 - Ascensión 2 (x200)</option>
+              <option value="r5_a1">7★ Rango 5 - Ascensión 1 (x200)</option>
+              <option value="r5_base">7★ Rango 5 (x200)</option>
+              <option value="r4_a2">7★ Rango 4 - Ascensión 2 (x200)</option>
+              <option value="r4_a1">7★ Rango 4 - Ascensión 1 (x200)</option>
+              <option value="r4_base">7★ Rango 4 (x200)</option>
             </select>
           </div>
         </div>
@@ -171,20 +175,22 @@
         </div>
       </div>
 
-      <!-- Tabla de Prestigio -->
+      <!-- Tabla de Prestigio con los 6 Rangos x200 -->
       <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
+          <table class="w-full text-left border-collapse min-w-[980px]">
             <thead>
               <tr class="bg-gray-950/90 border-b border-gray-800 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-                <th class="py-3 px-4 w-14 text-center">#</th>
-                <th class="py-3 px-4">Personaje</th>
-                <th class="py-3 px-4 text-center">Clase</th>
-                <th class="py-3 px-4 text-right text-amber-400">7★ R4 (Sig 200)</th>
-                <th class="py-3 px-4 text-right text-amber-200/80">7★ R4 (Sig 0)</th>
-                <th class="py-3 px-4 text-right text-purple-400">7★ R3 (Sig 200)</th>
-                <th class="py-3 px-4 text-right text-sky-400">6★ R5 Asc (Sig 200)</th>
-                <th id="prestigeAdminColHeader" class="py-3 px-4 text-center hidden">Editar</th>
+                <th class="py-3 px-3 w-12 text-center">#</th>
+                <th class="py-3 px-4">Personaje (x200)</th>
+                <th class="py-3 px-3 text-center">Clase</th>
+                <th class="py-3 px-3 text-right text-amber-400 bg-amber-950/20">7★ R5 Asc 2</th>
+                <th class="py-3 px-3 text-right text-amber-300">7★ R5 Asc 1</th>
+                <th class="py-3 px-3 text-right text-yellow-200">7★ R5</th>
+                <th class="py-3 px-3 text-right text-purple-400">7★ R4 Asc 2</th>
+                <th class="py-3 px-3 text-right text-purple-300">7★ R4 Asc 1</th>
+                <th class="py-3 px-3 text-right text-sky-300">7★ R4</th>
+                <th id="prestigeAdminColHeader" class="py-3 px-3 text-center hidden">Editar</th>
               </tr>
             </thead>
             <tbody id="prestigeTableBody" class="divide-y divide-gray-800/70 text-xs"></tbody>
@@ -239,7 +245,7 @@
     </div>
   </div>
 
-  <!-- MODAL CREAR / EDITAR PERSONAJE (INCLUYE CAMPOS DE PRESTIGIO) -->
+  <!-- MODAL CREAR / EDITAR PERSONAJE (CON LOS 6 TIPOS DE PRESTIGIO X200) -->
   <div id="formModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
@@ -272,29 +278,35 @@
           </div>
         </div>
 
-        <!-- Bloque de Prestigio en el formulario -->
-        <div class="bg-gray-950/80 p-3.5 rounded-xl border border-amber-500/30 space-y-2.5">
-          <label class="block text-amber-400 font-bold text-xs uppercase tracking-wider">🏆 Valores de Prestigio (Opcional - estilo mcoc.gg)</label>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-            <div>
-              <span class="text-gray-400 block mb-1">7★ R4 (Sig 200)</span>
-              <input type="number" id="p_r4_7_sig200" placeholder="Ej: 32450" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white">
+        <!-- Bloque de los 6 Prestigios Base x200 -->
+        <div class="bg-gray-950/80 p-3.5 rounded-xl border border-amber-500/30 space-y-3">
+          <label class="block text-amber-400 font-bold text-xs uppercase tracking-wider">
+            🏆 Prestigio del Personaje (Todos en Base Singularidad x200)
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+            <div class="bg-amber-950/20 p-2 rounded-lg border border-amber-500/30">
+              <span class="text-amber-300 font-bold block mb-1">7★ R5 - Ascensión 2</span>
+              <input type="number" id="p_r5_a2" placeholder="Ej: 39500" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white font-mono">
             </div>
-            <div>
-              <span class="text-gray-400 block mb-1">7★ R4 (Sin Duplicar)</span>
-              <input type="number" id="p_r4_7_sig0" placeholder="Ej: 26100" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white">
+            <div class="bg-gray-900 p-2 rounded-lg border border-gray-800">
+              <span class="text-amber-200 font-semibold block mb-1">7★ R5 - Ascensión 1</span>
+              <input type="number" id="p_r5_a1" placeholder="Ej: 36200" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white font-mono">
             </div>
-            <div>
-              <span class="text-gray-400 block mb-1">7★ R3 (Sig 200)</span>
-              <input type="number" id="p_r3_7_sig200" placeholder="Ej: 25800" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white">
+            <div class="bg-gray-900 p-2 rounded-lg border border-gray-800">
+              <span class="text-yellow-200 font-semibold block mb-1">7★ Rango 5</span>
+              <input type="number" id="p_r5_base" placeholder="Ej: 33100" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white font-mono">
             </div>
-            <div>
-              <span class="text-gray-400 block mb-1">7★ R3 (Sin Duplicar)</span>
-              <input type="number" id="p_r3_7_sig0" placeholder="Ej: 20900" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white">
+            <div class="bg-gray-900 p-2 rounded-lg border border-gray-800">
+              <span class="text-purple-400 font-semibold block mb-1">7★ R4 - Ascensión 2</span>
+              <input type="number" id="p_r4_a2" placeholder="Ej: 31800" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white font-mono">
             </div>
-            <div>
-              <span class="text-gray-400 block mb-1">6★ R5 Asc (Sig 200)</span>
-              <input type="number" id="p_r5_6_asc" placeholder="Ej: 23400" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white">
+            <div class="bg-gray-900 p-2 rounded-lg border border-gray-800">
+              <span class="text-purple-300 font-semibold block mb-1">7★ R4 - Ascensión 1</span>
+              <input type="number" id="p_r4_a1" placeholder="Ej: 29400" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white font-mono">
+            </div>
+            <div class="bg-gray-900 p-2 rounded-lg border border-gray-800">
+              <span class="text-sky-300 font-semibold block mb-1">7★ Rango 4</span>
+              <input type="number" id="p_r4_base" placeholder="Ej: 27100" class="w-full bg-gray-800 border border-gray-700 rounded px-2.5 py-1.5 text-white font-mono">
             </div>
           </div>
         </div>
@@ -342,10 +354,10 @@
       </div>
 
       <div class="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
-        <!-- Resumen de Prestigio dentro de la ficha -->
-        <div id="detailPrestigeBox" class="hidden bg-gray-950/80 p-3 rounded-xl border border-amber-500/30">
-          <h4 class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2">🏆 Prestigio del Personaje</h4>
-          <div id="detailPrestigeValues" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs"></div>
+        <!-- Resumen de los 6 Prestigios x200 dentro de la ficha -->
+        <div id="detailPrestigeBox" class="hidden bg-gray-950/80 p-3.5 rounded-xl border border-amber-500/30">
+          <h4 class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2.5">🏆 Prestigio del Personaje (Singularidad x200)</h4>
+          <div id="detailPrestigeValues" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs"></div>
         </div>
 
         <div>
@@ -454,6 +466,16 @@
       { id: 'Tecnologico', label: 'TECNOLÓGICOS', headerStyle: 'bg-blue-950/40 text-blue-400 border-blue-700/50' }
     ];
 
+    // Orden jerárquico de los 6 tipos de prestigio (todos en x200)
+    const PRESTIGE_KEYS_HIERARCHY = [
+      'r5_a2',
+      'r5_a1',
+      'r5_base',
+      'r4_a2',
+      'r4_a1',
+      'r4_base'
+    ];
+
     let characters = [];
     let activeTierFilters = [];
     let activeGameFilters = [];
@@ -466,7 +488,19 @@
       return ch.tierTags || ch.tags || [];
     }
 
-    // Cambiar entre pestaña Tier List y Prestigio
+    // Normaliza los datos de prestigio de un personaje (incluyendo compatibilidad si habías metido alguno antes)
+    function getCharPrestige(ch) {
+      const p = ch.prestige || {};
+      return {
+        r5_a2:   Number(p.r5_a2) || 0,
+        r5_a1:   Number(p.r5_a1) || 0,
+        r5_base: Number(p.r5_base) || 0,
+        r4_a2:   Number(p.r4_a2) || 0,
+        r4_a1:   Number(p.r4_a1) || 0,
+        r4_base: Number(p.r4_base || p.r4_7_sig200) || 0
+      };
+    }
+
     function switchMainView(viewName) {
       currentMainView = viewName;
       const vTier = document.getElementById('viewTierList');
@@ -637,10 +671,9 @@
     }
 
     // =========================================================================
-    // RENDERIZADO DE LA PESTAÑA DE PRESTIGIO
+    // RENDERIZADO DE LA PESTAÑA DE PRESTIGIO (ORDEN EN CASCADA R5 ASC 2 -> R5 -> R4)
     // =========================================================================
     function renderPrestigeView() {
-      // 1. Botones de filtro por clase
       const classBar = document.getElementById('prestigeClassFilterBar');
       classBar.innerHTML = '';
 
@@ -659,8 +692,7 @@
         classBar.appendChild(btn);
       });
 
-      // 2. Filtrar y ordenar personajes por el rango de prestigio elegido
-      const sortKey = document.getElementById('prestigeSortSelect').value;
+      const sortMode = document.getElementById('prestigeSortSelect').value;
       const searchQ = (document.getElementById('prestigeSearchInput').value || '').trim().toLowerCase();
 
       document.getElementById('prestigeAdminColHeader').classList.toggle('hidden', !isAdmin);
@@ -671,10 +703,24 @@
         return true;
       });
 
+      // Ordenación en cascada: Primero R5 Asc 2 -> luego R5 Asc 1 -> luego R5 -> luego R4 Asc 2 -> R4 Asc 1 -> R4
       filtered.sort((a, b) => {
-        const valA = Number(a.prestige && a.prestige[sortKey]) || 0;
-        const valB = Number(b.prestige && b.prestige[sortKey]) || 0;
-        if (valB !== valA) return valB - valA;
+        const pA = getCharPrestige(a);
+        const pB = getCharPrestige(b);
+
+        if (sortMode !== 'cascade_r5a2') {
+          // Si el usuario eligió una columna específica como prioridad, compara esa primero y luego hace cascada
+          if (pB[sortMode] !== pA[sortMode]) {
+            return pB[sortMode] - pA[sortMode];
+          }
+        }
+
+        for (const key of PRESTIGE_KEYS_HIERARCHY) {
+          if (pB[key] !== pA[key]) {
+            return pB[key] - pA[key];
+          }
+        }
+
         return a.name.localeCompare(b.name, 'es');
       });
 
@@ -682,12 +728,12 @@
       tbody.innerHTML = '';
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-gray-500 italic">No hay personajes que coincidan con la búsqueda.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-gray-500 italic">No hay personajes que coincidan con la búsqueda.</td></tr>`;
         return;
       }
 
       filtered.forEach((ch, idx) => {
-        const p = ch.prestige || {};
+        const p = getCharPrestige(ch);
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-800/50 transition cursor-pointer';
         tr.onclick = (e) => {
@@ -699,7 +745,7 @@
         const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
 
         tr.innerHTML = `
-          <td class="py-2.5 px-4 font-extrabold text-center ${idx < 3 ? 'text-amber-400 text-sm' : 'text-gray-500'}">${rankBadge}</td>
+          <td class="py-2.5 px-3 font-extrabold text-center ${idx < 3 ? 'text-amber-400 text-sm' : 'text-gray-500'}">${rankBadge}</td>
           <td class="py-2.5 px-4">
             <div class="flex items-center gap-3">
               ${ch.img 
@@ -712,15 +758,17 @@
               </div>
             </div>
           </td>
-          <td class="py-2.5 px-4 text-center">
+          <td class="py-2.5 px-3 text-center">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${CLASES.find(c => c.id === ch.clase)?.headerStyle || ''}">${ch.clase}</span>
           </td>
-          <td class="py-2.5 px-4 text-right font-mono font-extrabold text-amber-400 text-sm">${p.r4_7_sig200 ? Number(p.r4_7_sig200).toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-4 text-right font-mono text-amber-200/80">${p.r4_7_sig0 ? Number(p.r4_7_sig0).toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-4 text-right font-mono font-bold text-purple-300">${p.r3_7_sig200 ? Number(p.r3_7_sig200).toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-4 text-right font-mono text-sky-300">${p.r5_6_asc ? Number(p.r5_6_asc).toLocaleString('es-ES') : '—'}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-extrabold text-amber-400 text-sm bg-amber-950/10">${p.r5_a2 ? p.r5_a2.toLocaleString('es-ES') : '—'}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-bold text-amber-300">${p.r5_a1 ? p.r5_a1.toLocaleString('es-ES') : '—'}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-semibold text-yellow-200">${p.r5_base ? p.r5_base.toLocaleString('es-ES') : '—'}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-semibold text-purple-400">${p.r4_a2 ? p.r4_a2.toLocaleString('es-ES') : '—'}</td>
+          <td class="py-2.5 px-3 text-right font-mono text-purple-300">${p.r4_a1 ? p.r4_a1.toLocaleString('es-ES') : '—'}</td>
+          <td class="py-2.5 px-3 text-right font-mono text-sky-300">${p.r4_base ? p.r4_base.toLocaleString('es-ES') : '—'}</td>
           ${isAdmin ? `
-            <td class="py-2.5 px-4 text-center">
+            <td class="py-2.5 px-3 text-center">
               <button onclick="openFormModal('${ch.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded text-[11px] font-semibold">
                 ✏️ Editar
               </button>
@@ -1080,7 +1128,7 @@
     }
 
     // =========================================================================
-    // MODALES (CREAR / EDITAR PERSONAJE CON PRESTIGIO)
+    // MODALES (CREAR / EDITAR PERSONAJE CON LOS 6 PRESTIGIOS X200)
     // =========================================================================
     function renderFormTagInputs() {
       const tierContainer = document.getElementById('formTierTagsContainer');
@@ -1179,12 +1227,13 @@
         document.getElementById('charNotes').value = ch.notes || '';
         document.getElementById('charYoutube').value = ch.youtube || '';
 
-        const p = ch.prestige || {};
-        document.getElementById('p_r4_7_sig200').value = p.r4_7_sig200 || '';
-        document.getElementById('p_r4_7_sig0').value = p.r4_7_sig0 || '';
-        document.getElementById('p_r3_7_sig200').value = p.r3_7_sig200 || '';
-        document.getElementById('p_r3_7_sig0').value = p.r3_7_sig0 || '';
-        document.getElementById('p_r5_6_asc').value = p.r5_6_asc || '';
+        const p = getCharPrestige(ch);
+        document.getElementById('p_r5_a2').value = p.r5_a2 || '';
+        document.getElementById('p_r5_a1').value = p.r5_a1 || '';
+        document.getElementById('p_r5_base').value = p.r5_base || '';
+        document.getElementById('p_r4_a2').value = p.r4_a2 || '';
+        document.getElementById('p_r4_a1').value = p.r4_a1 || '';
+        document.getElementById('p_r4_base').value = p.r4_base || '';
         
         const assignedTierTags = getCharTierTags(ch);
         document.querySelectorAll('.tier-tag-cb').forEach(cb => {
@@ -1223,11 +1272,12 @@
       const youtube = document.getElementById('charYoutube').value.trim();
 
       const prestigeObj = {
-        r4_7_sig200: Number(document.getElementById('p_r4_7_sig200').value) || 0,
-        r4_7_sig0: Number(document.getElementById('p_r4_7_sig0').value) || 0,
-        r3_7_sig200: Number(document.getElementById('p_r3_7_sig200').value) || 0,
-        r3_7_sig0: Number(document.getElementById('p_r3_7_sig0').value) || 0,
-        r5_6_asc: Number(document.getElementById('p_r5_6_asc').value) || 0
+        r5_a2:   Number(document.getElementById('p_r5_a2').value) || 0,
+        r5_a1:   Number(document.getElementById('p_r5_a1').value) || 0,
+        r5_base: Number(document.getElementById('p_r5_base').value) || 0,
+        r4_a2:   Number(document.getElementById('p_r4_a2').value) || 0,
+        r4_a1:   Number(document.getElementById('p_r4_a1').value) || 0,
+        r4_base: Number(document.getElementById('p_r4_base').value) || 0
       };
       
       const selectedTierTags = Array.from(document.querySelectorAll('.tier-tag-cb:checked')).map(cb => cb.value);
@@ -1288,17 +1338,19 @@
       document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
       document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
 
-      // Mostrar bloque de Prestigio si tiene algún valor cargado
-      const p = ch.prestige || {};
+      // Mostrar los 6 valores de Prestigio (x200) si tiene alguno registrado
+      const p = getCharPrestige(ch);
       const pBox = document.getElementById('detailPrestigeBox');
       const pVals = document.getElementById('detailPrestigeValues');
-      if (p.r4_7_sig200 || p.r3_7_sig200 || p.r5_6_asc) {
+      if (p.r5_a2 || p.r5_a1 || p.r5_base || p.r4_a2 || p.r4_a1 || p.r4_base) {
         pBox.classList.remove('hidden');
         pVals.innerHTML = `
-          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ R4 (Sig 200)</span><strong class="text-amber-400 font-mono">${p.r4_7_sig200 || '—'}</strong></div>
-          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ R4 (Sig 0)</span><strong class="text-amber-200 font-mono">${p.r4_7_sig0 || '—'}</strong></div>
-          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ R3 (Sig 200)</span><strong class="text-purple-300 font-mono">${p.r3_7_sig200 || '—'}</strong></div>
-          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">6★ R5 Asc</span><strong class="text-sky-300 font-mono">${p.r5_6_asc || '—'}</strong></div>
+          <div class="bg-amber-950/20 p-2 rounded border border-amber-500/30"><span class="text-gray-400 block text-[10px]">7★ R5 Asc 2 (x200)</span><strong class="text-amber-400 font-mono">${p.r5_a2 ? p.r5_a2.toLocaleString('es-ES') : '—'}</strong></div>
+          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ R5 Asc 1 (x200)</span><strong class="text-amber-300 font-mono">${p.r5_a1 ? p.r5_a1.toLocaleString('es-ES') : '—'}</strong></div>
+          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ Rango 5 (x200)</span><strong class="text-yellow-200 font-mono">${p.r5_base ? p.r5_base.toLocaleString('es-ES') : '—'}</strong></div>
+          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ R4 Asc 2 (x200)</span><strong class="text-purple-400 font-mono">${p.r4_a2 ? p.r4_a2.toLocaleString('es-ES') : '—'}</strong></div>
+          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ R4 Asc 1 (x200)</span><strong class="text-purple-300 font-mono">${p.r4_a1 ? p.r4_a1.toLocaleString('es-ES') : '—'}</strong></div>
+          <div class="bg-gray-900 p-2 rounded border border-gray-800"><span class="text-gray-400 block text-[10px]">7★ Rango 4 (x200)</span><strong class="text-sky-300 font-mono">${p.r4_base ? p.r4_base.toLocaleString('es-ES') : '—'}</strong></div>
         `;
       } else {
         pBox.classList.add('hidden');
