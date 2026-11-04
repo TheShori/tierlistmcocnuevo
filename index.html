@@ -68,9 +68,13 @@
         🔼 Ocultar Filtros
       </button>
 
-      <!-- Botón de Importación Masiva (Admin) -->
+      <!-- Botón de Sincronización en 1 Clic desde Portapapeles (Admin) -->
+      <button id="btnQuickSync" onclick="syncFromClipboardOneClick()" class="hidden bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition shadow">
+        ⚡ Sincronizar 1-Clic
+      </button>
+
       <button id="btnImportPrestige" onclick="openImportModal()" class="hidden bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition">
-        📥 Importar Prestigios
+        📥 Pegar Manual
       </button>
 
       <button id="btnManageTags" onclick="openTagsManagerModal()" class="hidden bg-sky-700 hover:bg-sky-600 text-white font-semibold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition">
@@ -224,23 +228,22 @@
     </div>
   </div>
 
-  <!-- MODAL IMPORTACIÓN LIMPIA CSV (NOMBRE, R4, R4-A1, R4-A2, R5, R5-A1, R5-A2) -->
+  <!-- MODAL DE IMPORTACIÓN MULTIFORMATO (TEXTO MCOC.GG O JSON) -->
   <div id="importModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex justify-between items-center mb-3">
-        <h3 class="text-lg font-bold text-emerald-400">📥 Importación Limpia por CSV / Líneas</h3>
+        <h3 class="text-lg font-bold text-emerald-400">📥 Sincronizador Inteligente de Prestigios</h3>
         <button onclick="closeImportModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
       </div>
       <p class="text-xs text-gray-300 mb-3 leading-relaxed">
-        Pega los datos ordenados por líneas separadas por comas (o tabuladores) con este orden exacto:
-        <br><code>Nombre, 7★ R4, 7★ R4-A1, 7★ R4-A2, 7★ R5, 7★ R5-A1, 7★ R5-A2</code>
+        Acepta tanto el <strong>JSON extraído en 1 clic</strong> como el <strong>texto pegado directamente desde mcoc.gg</strong> (con el nuevo separador exacto de bloques de miles <code>XX,XXX</code> que ya no mezcla el puesto del ranking).
       </p>
       
-      <textarea id="importTextarea" rows="12" placeholder='Ejemplo:&#10;Onslaught, 27100, 29400, 31800, 33100, 36200, 39500&#10;Doctor Doom, 26800, 29000, 31500, 33000, 36100, 39400' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
+      <textarea id="importTextarea" rows="12" placeholder='Pega aquí el contenido copiado de mcoc.gg o pulsa directamente el botón amarillo "⚡ Sincronizar 1-Clic" de arriba...' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
 
       <div class="flex justify-end gap-2">
         <button onclick="closeImportModal()" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs">Cancelar</button>
-        <button onclick="executeCsvImport()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Actualizar Firebase</button>
+        <button onclick="processPrestigeInput(document.getElementById('importTextarea').value)" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Actualizar Firebase</button>
       </div>
     </div>
   </div>
@@ -490,18 +493,110 @@
       'r4_base'
     ];
 
+    // Diccionario completo de equivalencias Inglés (mcoc.gg) -> Español
     const EN_TO_ES_NAMES = {
       "captain britain": "Capitana Britania",
       "mister sinister": "Mister Siniestro",
-      "doctor doom": "Doctor Muerte",
+      "doctor doom": "Doctor Doom",
       "scarlet witch": "Bruja Escarlata",
+      "scarlet witch (classic)": "Bruja Escarlata (Clásica)",
       "black widow": "Viuda Negra",
-      "black widow (deadly origin)": "Viuda Negra (Origen Mortal)",
+      "black widow (deadly origin)": "Viuda Negra (Origen Letal)",
+      "black widow (claire voyant)": "Viuda Negra (Claire Voyant)",
       "deadpool (x-force)": "Deadpool (X-Force)",
-      "magneto (house of x)": "Magneto (Casa de X)",
+      "magneto (house of x)": "Magneto (House of X)",
       "spider-man (stark enhanced)": "Spider-Man (Mejorado por Stark)",
-      "spider-man (supreme)": "Spider-Man Supremo",
-      "hulkling": "Hulkling"
+      "spider-man (supreme)": "Spider-Man (Supremo)",
+      "spider-man (stealth suit)": "Spider-Man (Traje de Sigilo)",
+      "spider-man (symbiote)": "Spider-Man (Simbionte)",
+      "spider-man (classic)": "Spider-Man (Clásico)",
+      "spider-man (miles morales)": "Spider-Man (Miles Morales)",
+      "captain america (infinity war)": "Capitán América (Infinity War)",
+      "captain america (sam wilson)": "Capitán América (Sam Wilson)",
+      "captain america": "Capitán América",
+      "captain america (wwii)": "Capitán América (IIGM)",
+      "iron man (infamous)": "Iron Man (Infame)",
+      "iron man (infinity war)": "Iron Man (Infinity War)",
+      "black panther": "Pantera Negra",
+      "black panther (civil war)": "Pantera Negra (Civil War)",
+      "abomination (immortal)": "Abominación (Inmortal)",
+      "hulk (immortal)": "Hulk (Inmortal)",
+      "the serpent": "La Serpiente",
+      "the destroyer": "El Destructor",
+      "the leader": "El Líder",
+      "the overseer": "El Maestro",
+      "the hood": "The Hood",
+      "the champion": "El Campeón",
+      "absorbing man": "Hombre Absorbente",
+      "mole man": "Hombre Topo",
+      "dragon man": "Hombre Dragón",
+      "man-thing": "Hombre Cosa",
+      "sandman": "Hombre de Arena",
+      "iceman": "Hombre de Hielo",
+      "human torch": "Antorcha Humana",
+      "invisible woman": "Mujer Invisible",
+      "thing": "La Cosa",
+      "mister fantastic": "Míster Fantástico",
+      "mister negative": "Míster Negativo",
+      "doctor strange": "Doctor Extraño",
+      "doctor voodoo": "Doctor Vudú",
+      "doctor octopus": "Doctor Octopus",
+      "sorcerer supreme": "Hechicera Suprema",
+      "symbiote supreme": "Simbionte Supremo",
+      "corvus glaive": "Corvus Glaive",
+      "proxima midnight": "Próxima Midnight",
+      "ebony maw": "Ebony Maw",
+      "cull obsidian": "Cull Obsidian",
+      "silver surfer": "Silver Surfer",
+      "cosmic ghost rider": "Motorista Fantasma Cósmico",
+      "ghost rider": "Motorista Fantasma",
+      "red skull": "Cráneo Rojo",
+      "red guardian": "Guardián Rojo",
+      "red goblin": "Duende Rojo",
+      "red hulk": "Hulk Rojo",
+      "green goblin": "Duende Verde",
+      "black cat": "Gata Negra",
+      "white tiger": "Tigre Blanco",
+      "Emma Frost": "Emma Frost",
+      "storm": "Tormenta",
+      "storm (pyramid x)": "Tormenta (Pirámide X)",
+      "archangel": "Arcángel",
+      "beast": "Bestia",
+      "colossus": "Coloso",
+      "unstoppable colossus": "Coloso Imparable",
+      "nightcrawler": "Rondador Nocturno",
+      "wolverine": "Lobezno",
+      "wolverine (weapon x)": "Lobezno (Arma X)",
+      "wolverine (x-23)": "Lobezno (X-23)",
+      "old man logan": "El Viejo Logan",
+      "rogue": "Pícara",
+      "cyclops (blue team)": "Cíclope (Equipo Azul)",
+      "cyclops (new xavier school)": "Cíclope (Nueva Escuela Xavier)",
+      "squirrel girl": "Chica Ardilla",
+      "hawkeye": "Ojo de Halcón",
+      "winter soldier": "Soldado de Invierno",
+      "black bolt": "Rayo Negro",
+      "moon knight": "Caballero Luna",
+      "iron fist": "Puño de Hierro",
+      "iron fist (immortal)": "Puño de Hierro (Inmortal)",
+      "ghost": "Fantasma",
+      "wasp": "Avispa",
+      "yellowjacket": "Chaqueta Amarilla",
+      "vulture": "Buitre",
+      "sentinel": "Centinela",
+      "omega sentinel": "Centinela Omega",
+      "war machine": "Máquina de Guerra",
+      "valkyrie": "Valquiria",
+      "enchantress": "Encantadora",
+      "werewolf by night": "Hombre Lobo",
+      "count nefaria": "Conde Nefaria",
+      "king groot": "Rey Groot",
+      "king groot (deathless)": "Rey Groot (Sin Muerte)",
+      "guillotine (deathless)": "Guillotine (Sin Muerte)",
+      "thanos (deathless)": "Thanos (Sin Muerte)",
+      "she-hulk (deathless)": "Hulka (Sin Muerte)",
+      "vision (deathless)": "Visión (Sin Muerte)",
+      "she-hulk": "Hulka"
     };
 
     let characters = [];
@@ -511,6 +606,27 @@
     let currentMainView = 'tierlist';
     let isAdmin = false;
     let sortableInstances = [];
+
+    function normalizeStr(s) {
+      return (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+    }
+
+    function findMatchingChar(enName) {
+      const cleanEn = enName.toLowerCase().trim();
+      const mappedEs = EN_TO_ES_NAMES[cleanEn] || enName;
+      const normEn = normalizeStr(enName);
+      const normEs = normalizeStr(mappedEs);
+
+      // 1. Coincidencia exacta normalizada (sin tildes ni símbolos)
+      let found = characters.find(c => {
+        const cNorm = normalizeStr(c.name);
+        return cNorm === normEs || cNorm === normEn;
+      });
+      if (found) return found;
+
+      // 2. Coincidencia quitando paréntesis si en la Tier List lo llamó sin paréntesis o parecido
+      return characters.find(c => normalizeStr(c.name) === normEs);
+    }
 
     function getCharTierTags(ch) {
       return ch.tierTags || ch.tags || [];
@@ -642,6 +758,7 @@
       const btnAdd = document.getElementById('btnAddChar');
       const btnTags = document.getElementById('btnManageTags');
       const btnImport = document.getElementById('btnImportPrestige');
+      const btnQuick = document.getElementById('btnQuickSync');
       const bench = document.getElementById('sidebarBench');
       const btnAuth = document.getElementById('btnAdminAuth');
 
@@ -651,6 +768,7 @@
         btnAdd.classList.remove('hidden');
         btnTags.classList.remove('hidden');
         btnImport.classList.remove('hidden');
+        btnQuick.classList.remove('hidden');
         bench.classList.remove('hidden');
         btnAuth.innerText = 'Cerrar sesión';
       } else {
@@ -659,6 +777,7 @@
         btnAdd.classList.add('hidden');
         btnTags.classList.add('hidden');
         btnImport.classList.add('hidden');
+        btnQuick.classList.add('hidden');
         bench.classList.add('hidden');
         btnAuth.innerText = '🔒 Acceso Admin';
       }
@@ -701,7 +820,7 @@
     }
 
     // =========================================================================
-    // IMPORTACIÓN LIMPIA CSV (NOMBRE, R4, R4-A1, R4-A2, R5, R5-A1, R5-A2)
+    // SINCRONIZADOR 1-CLIC Y PARSER EXACTO DE BLOQUES MCOC.GG
     // =========================================================================
     function openImportModal() {
       document.getElementById('importTextarea').value = '';
@@ -714,49 +833,99 @@
       document.getElementById('importModal').classList.remove('flex');
     }
 
-    function executeCsvImport() {
-      const rawText = document.getElementById('importTextarea').value.trim();
-      if (!rawText) {
-        alert("Por favor, pega los datos.");
+    async function syncFromClipboardOneClick() {
+      try {
+        const clipText = await navigator.clipboard.readText();
+        if (!clipText || !clipText.trim()) {
+          alert("El portapapeles está vacío. Copia primero la tabla o usa el botón de extracción en mcoc.gg.");
+          return;
+        }
+        processPrestigeInput(clipText);
+      } catch (err) {
+        openImportModal();
+      }
+    }
+
+    function processPrestigeInput(rawText) {
+      const text = (rawText || '').trim();
+      if (!text) {
+        alert("No hay datos para procesar.");
         return;
       }
 
-      try {
-        const lines = rawText.split('\n');
-        let updatedCount = 0;
+      let updatedCount = 0;
 
-        lines.forEach(line => {
-          if (!line.trim() || line.startsWith("Nombre") || line.startsWith("Champion")) return;
-          const cols = line.split(/[,;\t]+/).map(c => c.trim());
-          
-          if (cols.length >= 7) {
-            const nameRaw = cols[0];
-            const cleanNameEn = nameRaw.toLowerCase().trim();
-            const translatedNameEs = EN_TO_ES_NAMES[cleanNameEn] || nameRaw;
-
-            let charObj = characters.find(c => c.name.toLowerCase().trim() === translatedNameEs.toLowerCase().trim() || c.name.toLowerCase().trim() === cleanNameEn);
-
+      // 1. Si viene en JSON directo (desde el Bookmarklet / Consola de mcoc.gg)
+      if (text.startsWith('[') || text.startsWith('{')) {
+        try {
+          const arr = JSON.parse(text);
+          const list = Array.isArray(arr) ? arr : [arr];
+          list.forEach(item => {
+            const charObj = findMatchingChar(item.name || '');
             if (charObj) {
               charObj.prestige = {
-                r4_base: Number(cols[1].replace(/\D/g, '')) || 0,
-                r4_a1:   Number(cols[2].replace(/\D/g, '')) || 0,
-                r4_a2:   Number(cols[3].replace(/\D/g, '')) || 0,
-                r5_base: Number(cols[4].replace(/\D/g, '')) || 0,
-                r5_a1:   Number(cols[5].replace(/\D/g, '')) || 0,
-                r5_a2:   Number(cols[6].replace(/\D/g, '')) || 0
+                r4_base: Number(item.r4_base) || 0,
+                r4_a1:   Number(item.r4_a1) || 0,
+                r4_a2:   Number(item.r4_a2) || 0,
+                r5_base: Number(item.r5_base) || 0,
+                r5_a1:   Number(item.r5_a1) || 0,
+                r5_a2:   Number(item.r5_a2) || 0
               };
               updatedCount++;
             }
-          }
-        });
-
-        persistChanges();
-        closeImportModal();
-        if (currentMainView === 'prestige') renderPrestigeView();
-        alert(`¡Importación CSV completada con éxito! Se han actualizado ${updatedCount} personajes.`);
-      } catch (err) {
-        alert("Error al procesar el texto: " + err.message);
+          });
+          persistChanges();
+          closeImportModal();
+          if (currentMainView === 'prestige') renderPrestigeView();
+          alert(`⚡ ¡Sincronización completada! ${updatedCount} personajes actualizados en Firebase.`);
+          return;
+        } catch (e) {
+          alert("Error leyendo JSON: " + e.message);
+          return;
+        }
       }
+
+      // 2. Si viene del copiado directo de mcoc.gg donde los números van pegados en la misma línea:
+      // Ejemplo real:
+      // Star-Lord (Kitty Pryde)47,4601
+      // 34,33037,07040,03040,70043,95047,460High Evolutionary47,3502
+      // 34,230--40,590--Yelena Belova40,580115
+      const regexBlock = /([A-Za-z0-9\.\-\'\s\(\)]+?)\s*(\d{1,2},\d{3}|\d{3})\s*(?:T?\d+)\s*[\r\n]+([0-9,\-]+)/g;
+      let match;
+      while ((match = regexBlock.exec(text)) !== null) {
+        let rawName = match[1].trim();
+        let valsStr = match[3].trim();
+
+        // Extraer exactamente los 6 tokens (ya sean números con formato XX,XXX o guiones '-')
+        let tokens = [];
+        const tokenRegex = /(\d{2},\d{3})|(-)/g;
+        let tMatch;
+        while ((tMatch = tokenRegex.exec(valsStr)) !== null && tokens.length < 6) {
+          if (tMatch[1]) {
+            tokens.push(Number(tMatch[1].replace(/,/g, '')));
+          } else {
+            tokens.push(0);
+          }
+        }
+
+        const charObj = findMatchingChar(rawName);
+        if (charObj && tokens.length > 0) {
+          charObj.prestige = {
+            r4_base: tokens[0] || 0,
+            r4_a1:   tokens[1] || 0,
+            r4_a2:   tokens[2] || 0,
+            r5_base: tokens[3] || 0,
+            r5_a1:   tokens[4] || 0,
+            r5_a2:   tokens[5] || 0
+          };
+          updatedCount++;
+        }
+      }
+
+      persistChanges();
+      closeImportModal();
+      if (currentMainView === 'prestige') renderPrestigeView();
+      alert(`⚡ ¡Sincronización completada! Se han actualizado correctamente ${updatedCount} personajes en Firebase.`);
     }
 
     // =========================================================================
