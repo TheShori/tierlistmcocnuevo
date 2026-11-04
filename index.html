@@ -68,7 +68,7 @@
         🔼 Ocultar Filtros
       </button>
 
-      <!-- BOTÓN AUTOMÁTICO 1-CLIC SIN COPIAR NI PEGAR -->
+      <!-- BOTÓN AUTOMÁTICO 1-CLIC -->
       <button id="btnAutoFillPrestige" onclick="autoFillOfficialPrestige()" class="hidden bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition shadow-lg">
         ⚡ Auto-Rellenar Prestigios (1-Clic)
       </button>
@@ -277,7 +277,7 @@
         <input type="hidden" id="editCharId">
         <div>
           <label class="block text-gray-300 mb-1 font-medium">Nombre del Personaje *</label>
-          <input type="text" id="charName" required placeholder="Ej: Onslaught" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
+          <input type="text" id="charName" required oninput="autoLookupPrestigeByName(this.value)" placeholder="Ej: Onslaught" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white">
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -436,9 +436,6 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // =========================================================================
-    // BASE DE DATOS OFICIAL DE MCOC.GG INTEGRADA (SE APLICA CON 1 SOLO CLIC)
-    // =========================================================================
     const OFFICIAL_MCOC_GG_RAW = `Star-Lord (Kitty Pryde)47,4601
 34,33037,07040,03040,70043,95047,460High Evolutionary47,3502
 34,23036,96039,91040,60043,84047,350Blue Marvel47,1803
@@ -778,7 +775,6 @@
       'r4_base'
     ];
 
-    // Equivalencias Inglés (mcoc.gg) -> Variantes en Español
     const EN_TO_ES_ALIASES = {
       "captain britain": ["Capitana Britania", "Captain Britain"],
       "mister sinister": ["Mister Siniestro", "Mr Siniestro", "Mister Sinister"],
@@ -819,10 +815,11 @@
       "man-thing": ["Hombre Cosa", "Man-Thing"],
       "sandman": ["Hombre de Arena", "Sandman"],
       "iceman": ["Hombre de Hielo", "Iceman"],
-      "human torch": ["Antorcha Humana", "Human Torch"],
-      "invisible woman": ["Mujer Invisible", "Invisible Woman"],
-      "thing": ["La Cosa", "Thing"],
-      "mister fantastic": ["Míster Fantástico", "Mister Fantastico", "Mister Fantastic"],
+      "human torch": ["Antorcha (Victorioso)", "Antorcha Humana", "Human Torch"],
+      "invisible woman": ["Mujer Invisible (Victoriosa)", "Invisible Woman"],
+      "mister fantastic": ["Mister Fantastico (Victorioso)", "Míster Fantástico", "Mister Fantastic"],
+      "thing": ["La Mole (Victorioso)", "La Cosa", "Thing"],
+      "star-lord (kitty pryde)": ["Star-Lord (Kitty Pryde)"],
       "mister negative": ["Míster Negativo", "Mister Negativo", "Mister Negative"],
       "doctor strange": ["Doctor Extraño", "Doctor Strange"],
       "doctor voodoo": ["Doctor Vudú", "Doctor Vudu", "Doctor Voodoo"],
@@ -902,6 +899,71 @@
         const cNorm = normalizeStr(c.name);
         return candidates.includes(cNorm);
       });
+    }
+
+    function getOfficialPrestigeForName(targetName) {
+      if (!targetName || !targetName.trim()) return null;
+      const qNorm = normalizeStr(targetName);
+
+      const lines = OFFICIAL_MCOC_GG_RAW.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Champion') && !l.startsWith('Prestige'));
+      let currentCharName = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (i === 0 || !/^(\d{2},\d{3}|-)/.test(line)) {
+          const mHeader = line.match(/^(.+?)\d{1,2},\d{3}(?:T?\d+)$/);
+          if (mHeader) currentCharName = mHeader[1].trim();
+          continue;
+        }
+
+        let cursor = 0;
+        let vals = [];
+        while (vals.length < 6 && cursor < line.length) {
+          const rest = line.slice(cursor);
+          const mNum = rest.match(/^(\d{2},\d{3})/);
+          if (mNum) {
+            vals.push(Number(mNum[1].replace(/,/g, '')));
+            cursor += mNum[1].length;
+          } else if (rest.startsWith('-')) {
+            vals.push(0);
+            cursor += 1;
+          } else {
+            break;
+          }
+        }
+
+        if (currentCharName && vals.length === 6) {
+          const cleanEn = currentCharName.toLowerCase().trim();
+          const candidates = [currentCharName, ...(EN_TO_ES_ALIASES[cleanEn] || [])].map(normalizeStr);
+          if (candidates.includes(qNorm)) {
+            return {
+              r4_base: vals[0] || 0,
+              r4_a1:   vals[1] || 0,
+              r4_a2:   vals[2] || 0,
+              r5_base: vals[3] || 0,
+              r5_a1:   vals[4] || 0,
+              r5_a2:   vals[5] || 0
+            };
+          }
+        }
+
+        const remainder = line.slice(cursor).trim();
+        const mNext = remainder.match(/^(.+?)(?:\d{1,2},\d{3}|\d{3})(?:T?\d+)$/);
+        currentCharName = mNext ? mNext[1].trim() : null;
+      }
+      return null;
+    }
+
+    function autoLookupPrestigeByName(val) {
+      const found = getOfficialPrestigeForName(val);
+      if (found) {
+        document.getElementById('p_r5_a2').value = found.r5_a2 || '';
+        document.getElementById('p_r5_a1').value = found.r5_a1 || '';
+        document.getElementById('p_r5_base').value = found.r5_base || '';
+        document.getElementById('p_r4_a2').value = found.r4_a2 || '';
+        document.getElementById('p_r4_a1').value = found.r4_a1 || '';
+        document.getElementById('p_r4_base').value = found.r4_base || '';
+      }
     }
 
     function getCharTierTags(ch) {
@@ -1020,7 +1082,7 @@
         .then(() => closeLoginModal())
         .catch(() => {
           errEl.innerText = 'Error: Correo o contraseña incorrectos.';
-          errEl.classList.remove('hidden');
+          errEl.classList.add('hidden');
         })
         .finally(() => {
           btn.innerText = 'Entrar';
@@ -1095,9 +1157,6 @@
       }
     }
 
-    // =========================================================================
-    // AUTO-RELLENADO EN 1 CLIC SIN COPIAR NI PEGAR (TABLA MCOC.GG INTEGRADA)
-    // =========================================================================
     function autoFillOfficialPrestige() {
       processMcocRawText(OFFICIAL_MCOC_GG_RAW);
     }
@@ -1117,7 +1176,6 @@
       const text = (rawText || '').trim();
       if (!text) return;
 
-      // Primero limpiamos cualquier prestigio corrupto (como el 47 o 1604 que se había guardado antes)
       characters.forEach(c => {
         if (c.prestige && c.prestige.r5_a2 && c.prestige.r5_a2 < 1000) {
           c.prestige = { r5_a2: 0, r5_a1: 0, r5_base: 0, r4_a2: 0, r4_a1: 0, r4_base: 0 };
@@ -1125,27 +1183,18 @@
       });
 
       let updatedCount = 0;
-
-      // Analizador línea a línea de la estructura real de mcoc.gg:
-      // Línea 0: Star-Lord (Kitty Pryde)47,4601
-      // Línea 1: 34,33037,07040,03040,70043,95047,460High Evolutionary47,3502
       const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Champion') && !l.startsWith('Prestige'));
-
       let currentCharName = null;
 
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
         if (i === 0 || !/^(\d{2},\d{3}|-)/.test(line)) {
-          // Es una cabecera de personaje inicial: "Star-Lord (Kitty Pryde)47,4601"
           const mHeader = line.match(/^(.+?)\d{1,2},\d{3}(?:T?\d+)$/);
-          if (mHeader) {
-            currentCharName = mHeader[1].trim();
-          }
+          if (mHeader) currentCharName = mHeader[1].trim();
           continue;
         }
 
-        // La línea empieza por los 6 valores pegados (ej: "34,33037,07040,03040,70043,95047,460High Evolutionary47,3502" o "34,210--40,590--Yelena Belova40,580115")
         let cursor = 0;
         let vals = [];
         while (vals.length < 6 && cursor < line.length) {
@@ -1177,20 +1226,15 @@
           }
         }
 
-        // El resto de la línea contiene el nombre del SIGUIENTE personaje + su Max Obtainable + su Puesto
         const remainder = line.slice(cursor).trim();
         const mNext = remainder.match(/^(.+?)(?:\d{1,2},\d{3}|\d{3})(?:T?\d+)$/);
-        if (mNext) {
-          currentCharName = mNext[1].trim();
-        } else {
-          currentCharName = null;
-        }
+        currentCharName = mNext ? mNext[1].trim() : null;
       }
 
       persistChanges();
       closeImportModal();
       renderPrestigeView();
-      alert(`✅ ¡Listo! Se han reparado y actualizado automáticamente los 6 rangos de prestigio de ${updatedCount} personajes en tu Firebase.`);
+      alert(`✅ ¡Listo! Se han actualizado automáticamente los 6 rangos de prestigio de ${updatedCount} personajes en tu Firebase.`);
     }
 
     // =========================================================================
@@ -1792,7 +1836,7 @@
       const notes = document.getElementById('charNotes').value.trim();
       const youtube = document.getElementById('charYoutube').value.trim();
 
-      const prestigeObj = {
+      let prestigeObj = {
         r5_a2:   Number(document.getElementById('p_r5_a2').value) || 0,
         r5_a1:   Number(document.getElementById('p_r5_a1').value) || 0,
         r5_base: Number(document.getElementById('p_r5_base').value) || 0,
@@ -1800,6 +1844,12 @@
         r4_a1:   Number(document.getElementById('p_r4_a1').value) || 0,
         r4_base: Number(document.getElementById('p_r4_base').value) || 0
       };
+
+      const hasAnyValue = Object.values(prestigeObj).some(v => v > 0);
+      if (!hasAnyValue) {
+        const autoFound = getOfficialPrestigeForName(name);
+        if (autoFound) prestigeObj = autoFound;
+      }
       
       const selectedTierTags = Array.from(document.querySelectorAll('.tier-tag-cb:checked')).map(cb => cb.value);
 
