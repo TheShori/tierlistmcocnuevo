@@ -68,9 +68,9 @@
         🔼 Ocultar Filtros
       </button>
 
-      <!-- Botón de Sincronización en 1 Clic desde Portapapeles (Admin) -->
-      <button id="btnQuickSync" onclick="syncFromClipboardOneClick()" class="hidden bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition shadow">
-        ⚡ Sincronizar 1-Clic
+      <!-- BOTÓN AUTOMÁTICO 1-CLIC SIN COPIAR NI PEGAR -->
+      <button id="btnAutoFillPrestige" onclick="autoFillOfficialPrestige()" class="hidden bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition shadow-lg">
+        ⚡ Auto-Rellenar Prestigios (1-Clic)
       </button>
 
       <button id="btnImportPrestige" onclick="openImportModal()" class="hidden bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition">
@@ -228,22 +228,22 @@
     </div>
   </div>
 
-  <!-- MODAL DE IMPORTACIÓN MULTIFORMATO (TEXTO MCOC.GG O JSON) -->
+  <!-- MODAL DE IMPORTACIÓN MANUAL -->
   <div id="importModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
       <div class="flex justify-between items-center mb-3">
-        <h3 class="text-lg font-bold text-emerald-400">📥 Sincronizador Inteligente de Prestigios</h3>
+        <h3 class="text-lg font-bold text-emerald-400">📥 Pegar Texto de mcoc.gg</h3>
         <button onclick="closeImportModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
       </div>
       <p class="text-xs text-gray-300 mb-3 leading-relaxed">
-        Acepta tanto el <strong>JSON extraído en 1 clic</strong> como el <strong>texto pegado directamente desde mcoc.gg</strong> (con el nuevo separador exacto de bloques de miles <code>XX,XXX</code> que ya no mezcla el puesto del ranking).
+        Si algún día salen nuevos personajes en <code>mcoc.gg</code>, puedes pegar aquí el bloque copiado directamente de su tabla.
       </p>
       
-      <textarea id="importTextarea" rows="12" placeholder='Pega aquí el contenido copiado de mcoc.gg o pulsa directamente el botón amarillo "⚡ Sincronizar 1-Clic" de arriba...' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
+      <textarea id="importTextarea" rows="12" placeholder='Pega aquí el texto copiado de mcoc.gg...' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
 
       <div class="flex justify-end gap-2">
         <button onclick="closeImportModal()" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs">Cancelar</button>
-        <button onclick="processPrestigeInput(document.getElementById('importTextarea').value)" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Actualizar Firebase</button>
+        <button onclick="processMcocRawText(document.getElementById('importTextarea').value)" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Actualizar Firebase</button>
       </div>
     </div>
   </div>
@@ -436,6 +436,291 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // =========================================================================
+    // BASE DE DATOS OFICIAL DE MCOC.GG INTEGRADA (SE APLICA CON 1 SOLO CLIC)
+    // =========================================================================
+    const OFFICIAL_MCOC_GG_RAW = `Star-Lord (Kitty Pryde)47,4601
+34,33037,07040,03040,70043,95047,460High Evolutionary47,3502
+34,23036,96039,91040,60043,84047,350Blue Marvel47,1803
+34,11036,84039,79040,46043,69047,180Black Tarantula47,1604
+34,10036,82039,76040,44043,67047,160Colossus (Age of Apocalypse)47,1305
+34,06036,78039,72040,41043,64047,130Iron Man (Infamous)47,1106
+34,06036,78039,72040,39043,62047,110Spider-Man (Pavitr Prabhakar)46,9907
+33,97036,68039,61040,29043,51046,990Dani Moonstar46,9608
+33,94036,65039,58040,26043,48046,960Shatterstar46,9109
+33,92036,63039,56040,23043,44046,910Baron Zemo46,830T10
+33,85036,55039,47040,15043,36046,830Doctor Doom46,830T10
+33,88036,59039,52040,15043,36046,830Ghost Rider (Robbie Reyes)46,72012
+33,78036,48039,40040,06043,26046,720Phyla-Vell46,69013
+33,75036,45039,36040,03043,23046,690Spider-Man Noir46,650T14
+33,73036,43039,34040,00043,20046,650Wave46,650T14
+33,74036,44039,35040,00043,20046,650Madelyne Pryor46,64016
+33,71036,40039,31039,99043,19046,640Beast46,54017
+33,62036,31039,21039,90043,09046,540Agatha Harkness46,520T18
+33,64036,33039,23039,89043,08046,520Magik46,520T18
+33,64036,33039,23039,89043,08046,520Carina46,510T20
+33,64036,33039,23039,88043,07046,510Doctor Bong46,510T20
+33,61036,30039,20039,88043,07046,510Ruby Thursday46,470T22
+33,60036,28039,18039,85043,03046,470Spider-Slayer (J. Jonah Jameson)46,470T22
+33,59036,27039,17039,85043,03046,470Hobgoblin46,45024
+33,58036,26039,16039,83043,01046,450Ghost Rider46,43025
+33,56036,24039,14039,81042,99046,430Pixie46,42026
+33,57036,25039,15039,80042,98046,420Cable46,39027
+33,45036,12039,01039,78042,96046,390Lizard46,370T28
+33,51036,19039,08039,76042,94046,370Spider-Punk46,370T28
+33,54036,22039,12039,76042,94046,370Doctor Strange46,330T30
+33,48036,16039,05039,73042,90046,330Gwenom46,330T30
+33,51036,19039,08039,73042,90046,330Spider-Man (Symbiote)46,32032
+33,50036,18039,07039,72042,89046,320Blade (Stellar-Forged)46,30033
+33,48036,16039,05039,70042,87046,300Star-Lord (Stellar-Forged)46,27034
+33,46036,13039,02039,67042,84046,270Iron Man46,250T35
+33,44036,11039,00039,66042,83046,250M'Baku46,250T35
+33,44036,11039,00039,66042,83046,250The Destroyer46,240T37
+33,42036,09038,98039,65042,82046,240The Leader46,240T37
+33,42036,09038,98039,65042,82046,240Kindred46,23039
+33,43036,10038,99039,64042,81046,230Mr. Knight46,22040
+33,42036,09038,98039,63042,80046,220Arcade46,210T41
+33,41036,08038,96039,62042,79046,210Dust46,210T41
+33,41036,08038,96039,62042,79046,210Omega Sentinel46,210T41
+33,43036,10038,99039,62042,79046,210White Tiger46,210T41
+33,42036,09038,98039,62042,79046,210Scream46,18045
+33,39036,06038,94039,60042,76046,180Thor (Ragnarok)46,16046
+33,37036,04038,92039,58042,74046,160Rhino46,15047
+33,36036,03038,91039,57042,73046,150Adam Warlock46,140T48
+33,37036,04038,92039,56042,72046,140Spot46,140T48
+33,35036,01038,89039,56042,72046,140Gentle46,11050
+33,33035,99038,87039,54042,70046,110Lady Deathstrike46,10051
+33,34036,00038,88039,53042,69046,100Moondragon46,09052
+33,31035,97038,85039,52042,68046,090Green Goblin (Stellar Forged)46,08053
+33,31035,97038,85039,51042,67046,080Human Torch (Victorious)46,060T54
+33,29035,95038,82039,49042,65046,060Mister Fantastic (Victorious)46,060T54
+33,29035,95038,82039,49042,65046,060Arnim Zola46,040T56
+33,28035,94038,81039,48042,63046,040Invisible Woman (Victorious)46,040T56
+33,28035,94038,81039,48042,63046,040Sandman46,040T56
+33,28835,95038,82039,48042,63046,040Thing (Victorious)46,03059
+33,27035,93038,80039,47042,62046,030Black Panther (Civil War)46,020T60
+33,27035,93038,80039,46042,61046,020Medusa46,020T60
+33,27035,93038,80039,46042,61046,020Patriot46,020T60
+33,27035,93038,80039,46042,61046,020Captain America (Sam Wilson)45,98063
+33,25035,91038,78039,43042,58045,980Maestro45,970T64
+33,23035,89038,76039,42042,57045,970Sersi45,970T64
+33,23035,89038,76039,42042,57045,970Spiral45,970T64
+33,24035,90038,77039,42042,57045,970America Chavez45,950T67
+33,22035,87038,74039,40042,55045,950Gorr45,950T67
+33,22035,87038,74039,40042,55045,950Knull45,950T67
+33,22035,87038,74039,40042,55045,950Abomination (Immortal)45,94070
+33,22035,87038,74039,39042,54045,940Hit-Monkey45,930T71
+33,22035,87038,74039,38042,53045,930Shuri45,930T71
+33,21035,86038,73039,38042,53045,930Attuma45,920T73
+33,18035,83038,69039,37042,52045,920Mister Negative45,920T73
+33,20035,85038,72039,37042,52045,920Jabari Panther45,900T75
+33,19035,84038,71039,36042,50045,900Nova45,900T75
+33,19035,84038,71039,36042,50045,900Sasquatch45,900T75
+33,17035,82038,68039,36042,50045,900Scarlet Witch45,900T75
+33,19035,84038,71039,36042,50045,900Toad45,900T75
+33,19035,84038,71039,36042,50045,900Peni Parker45,89080
+33,18035,83038,69039,35042,49045,890Dragon Man45,880T81
+33,17035,82038,68039,34042,48045,880Wong45,880T81
+33,17035,82038,68039,34042,48045,880Purgatory45,85083
+33,15035,80038,66039,32042,46045,850Captain Marvel45,840T84
+33,16035,81038,67039,31042,45045,840Mister Fantastic45,840T84
+33,15035,80038,66039,31042,45045,840Spider-Ham45,840T84
+33,16035,81038,67039,31042,45045,840Storm (Pyramid X)45,83087
+33,15035,80038,66039,30042,44045,830Terrax45,82088
+33,13035,78038,64039,29042,43045,820Warlock45,81089
+33,13035,78038,64039,28042,42045,810Mojo45,79090
+33,09035,73038,59039,26042,40045,790Man-Thing45,68091
+32,83035,45038,28039,17042,30045,680Guillotine 209945,67092
+33,05035,69038,54039,16042,29045,670Vision (Aarkus)45,65093
+33,01035,65038,50039,14042,27045,650Spider-Man (Classic)45,54094
+32,94035,57038,41039,05042,17045,540Mysterio45,53095
+32,94035,57038,41039,04042,16045,530Bishop45,52096
+32,91035,54038,38039,03042,15045,520Elsa Bloodstone45,50097
+32,91035,54038,38039,01042,13045,500Storm45,49098
+32,89035,52038,36039,00042,12045,490Iceman45,44099
+32,87035,50038,34038,97042,08045,440Korg45,420100
+32,84035,46038,30038,95042,06045,420Howard The Duck45,350T101
+32,78035,40038,23038,88041,99045,350Magneto (House of X)45,350T101
+32,78035,40038,23038,88041,99045,350Corvus Glaive45,230103
+32,72035,33038,15038,78041,88045,230Blade45,070T104
+32,60035,20038,01038,64041,73045,070Captain America (Infinity War)45,070T104
+32,58035,18037,99038,64041,73045,070Emma Frost45,010T106
+32,54035,14037,95038,60041,68045,010Iron Man (Infinity War)45,010T106
+32,55035,15037,96038,60041,68045,010Colossus45,000108
+32,53035,13037,94038,59041,67045,000Domino44,960109
+32,51035,11037,92038,55041,63044,960Mephisto44,950110
+32,50035,10037,91038,54041,62044,950Venom the Duck44,650111
+32,28034,86037,65038,28041,34044,650Hyperion44,530112
+32,19034,76037,54038,18041,23044,530Deadpool44,290113
+32,02034,58037,34037,98041,01044,290Onslaught40,590114
+34,210--40,590--Yelena Belova40,580115
+34,210--40,580--Dark Phoenix40,370116
+34,040--40,370--Shathra40,360117
+34,030--40,360--Silver Surfer40,320118
+34,020--40,320--Quicksilver40,260119
+33,950--40,260--Heimdall40,150120
+33,840--40,150--Okoye40,060121
+33,780--40,060--The Serpent39,960122
+33,680--39,960--Photon39,940123
+33,680--39,940--Prowler39,760124
+33,520--39,760--Imperiosa39,700125
+33,470--39,700--Thor (Jane Foster)39,690126
+33,460--39,690--Franken-Castle39,680127
+33,440--39,680--Bullseye39,660T128
+33,440--39,660--Dracula39,660T128
+33,440--39,660--Karolina Dean39,660T128
+33,460--39,660--Spider-Man (Supreme)39,660T128
+33,460--39,660--Valkyrie39,660T128
+33,440--39,660--Werewolf By Night39,660T128
+33,430--39,660--Enchantress39,650T134
+33,420--39,650--Jean Grey39,650T134
+33,430--39,650--Lumatrix39,650T134
+33,430--39,650--Negasonic Teenage Warhead39,640137
+33,440--39,640--Thanos (Deathless)39,630138
+33,400--39,630--Spider-Woman39,620139
+33,400--39,620--Count Nefaria39,610T140
+33,390--39,610--Punisher39,610T140
+33,390--39,610--Absorbing Man39,600T142
+33,380--39,600--Chee'ilth39,600T142
+33,380--39,600--Gladiator39,600T142
+33,390--39,600--Bastion39,590T145
+33,380--39,590--Cassandra Nova39,590T145
+33,380--39,590--Solvarch39,590T145
+33,360--39,590--Nico Minoru39,580T148
+33,370--39,580--Phoenix39,580T148
+33,250--39,580--Captain Britain39,570T150
+33,350--39,570--Northstar39,570T150
+33,370--39,570--The Maker39,570T150
+33,370--39,570--Beta Ray Bill39,550153
+33,342--39,550--Dazzler39,540T154
+33,340--39,540--She-Hulk (Deathless)39,540T154
+33,330--39,540--Ironheart39,530T156
+33,340--39,530--Silver Sable39,530T156
+33,340--39,530--Ant-Man (Future)39,520158
+33,320--39,520--Kushala39,500T159
+33,300--39,500--Nimrod39,500T159
+33,300--39,500--Rocket Raccoon39,500T159
+33,330--39,500--Galan39,490T162
+33,290--39,490--Namor39,490T162
+33,300--39,490--Silver Samurai39,480T164
+33,300--39,480--The Overseer39,480T164
+33,270--39,480--King Groot (Deathless)39,470T166
+33,250--39,470--Titania39,470T166
+33,270--39,470--Falcon (Joaquin Torres)39,450T168
+33,270--39,450--Jack O'Lantern39,450T168
+33,270--39,450--Cassie Lang39,440170
+33,250--39,440--Morbius39,430171
+33,250--39,430--Hulkling39,420T172
+33,240--39,420--Yondu39,420T172
+33,240--39,420--Guillotine (Deathless)39,410T174
+33,230--39,410--Isophyne39,410T174
+33,240--39,410--Mantis39,410T174
+33,240--39,410--Sauron39,410T174
+33,230--39,410--Vox39,410T174
+33,230--39,410--Apocalypse39,400T179
+33,220--39,400--M.O.D.O.K.39,400T179
+33,200--39,400--Odin39,400T179
+33,220--39,400--Shocker39,400T179
+33,230--39,400--Wiccan39,400T179
+33,230--39,400--Red Goblin39,390T184
+33,210--39,390--Stryfe39,390T184
+33,210--39,390--Deadpool (X-Force)39,380T186
+33,200--39,380--Hulk (Immortal)39,380T186
+33,200--39,380--Rintrah39,380T186
+33,190--39,380--Goldpool39,370T189
+33,210--39,370--Kraven39,370T189
+33,190--39,370--Platinumpool39,370T189
+33,190--39,370--Professor X39,370T189
+33,210--39,370--Kitty Pryde39,360T193
+33,210--39,360--Shang-Chi39,360T193
+33,190--39,360--Spider-Man (Stealth Suit)39,360T193
+33,210--39,360--Tigra39,360T193
+33,200--39,360--Mangog39,350T197
+33,180--39,350--Scorpion39,350T197
+33,190--39,350--Sorcerer Supreme39,350T197
+33,180--39,350--Black Cat39,340T200
+33,170--39,340--Guardian39,340T200
+33,180--39,340--Luke Cage39,340T200
+33,190--39,340--Sunspot39,340T200
+33,180--39,340--Super Skrull39,340T200
+33,170--39,340--Misty Knight39,330T205
+33,170--39,330--Red Guardian39,330T205
+33,190--39,330--Sentinel39,330T205
+33,160--39,330--Silk39,330T205
+33,170--39,330--Spider-Man 209939,330T205
+33,190--39,330--Viv Vision39,330T205
+33,170--39,330--Anti-Venom39,320211
+33,150--39,320--Black Widow (Claire Voyant)39,310T212
+33,160--39,310--Diablo39,310T212
+33,150--39,310--Jessica Jones39,280214
+33,120--39,280--Sentry39,270215
+32,850--39,270--Black Widow (Deadly Origin)39,250216
+33,120--39,250--Thing39,240217
+33,080--39,240--Nightcrawler39,210T218
+33,080--39,210--Venompool39,210T218
+33,058--39,210--Longshot39,190T220
+33,040--39,190--Punisher 209939,190T220
+33,050--39,190--Masacre39,170222
+33,040--39,170--Gambit39,150223
+33,020--39,150--Ant-Man39,140224
+33,000--39,140--Falcon39,120225
+33,010--39,120--Superior Iron Man39,090226
+32,960--39,090--Daredevil (Hell's Kitchen)39,070227
+32,950--39,070--Cyclops (Blue Team)39,030T228
+32,910--39,030--Hulk39,030T228
+32,900--39,030--Crossbones39,020230
+32,900--39,020--Ebony Maw39,010T231
+32,910--39,010--Havok39,010T231
+32,900--39,010--Symbiote Supreme38,980233
+32,870--38,980--Red Skull38,960234
+31,810--38,960--Nick Fury38,950235
+32,860--38,950--Human Torch38,940236
+32,840--38,940--Sabretooth38,920237
+32,830--38,920--Black Panther38,880238
+32,790--38,880--Invisible Woman38,870T239
+32,780--38,870--Kingpin38,870T239
+32,760--38,870--Mole Man38,790241
+32,710--38,790--Mordo38,770242
+32,700--38,770--Thanos38,740243
+32,650--38,740--Mister Sinister38,730244
+32,320--38,730--Hawkeye38,700245
+32,630--38,700--Angela38,690246
+32,640--38,690--Killmonger38,670T247
+32,600--38,670--Ronin38,670T247
+32,620--38,670--Gwenpool38,660T249
+32,610--38,660--Joe Fixit38,660T249
+32,590--38,660--Wolverine (Weapon X)38,660T249
+32,600--38,660--Cull Obsidian38,650T252
+32,600--38,650--The Hood38,650T252
+32,590--38,650--Void38,640254
+32,580--38,640--Civil Warrior38,630T255
+32,570--38,630--Night Thrasher38,630T255
+32,580--38,630--Karnak38,620T257
+32,560--38,620--Ultron38,620T257
+32,560--38,620--Gamora38,580T259
+32,550--38,580--Spider-Man (Miles Morales)38,580T259
+32,540--38,580--Omega Red38,570T261
+32,530--38,570--War Machine38,570T261
+32,530--38,570--Carnage38,560263
+32,540--38,560--Archangel38,540T264
+32,510--38,540--Ghost38,540T264
+32,500--38,540--Doctor Voodoo38,520T266
+32,480--38,520--Vision38,520T266
+32,470--38,520--Vision (Deathless)38,500268
+32,470--38,500--Wolverine (X-23)38,470269
+32,440--38,470--Red Hulk38,370270
+32,350--38,370--Juggernaut38,340271
+32,340--38,340--Spider-Gwen38,320272
+32,320--38,320--Venom38,080273
+32,100--38,080--Hulkbuster38,020274
+32,050--38,020--Kang38,000275
+32,040--38,000--Spider-Man (Stark Enhanced)37,750276
+31,850--37,750--Ultron (Classic)37,690277
+31,780--37,690--Star-Lord37,330278
+31,480--37,330--She-Hulk37,160279
+31,340--37,160--Scarlet Witch (Classic)37,070280
+31,260--37,070--`;
+
     const TIER_TAGS = [
       { id: 'asc7',       label: '⬆️ Ascensión 7 Estrellas', emoji: '⬆️', color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
       { id: 'gbasico',    label: '💜 7 Estrellas Grupo Básico', emoji: '💜', color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
@@ -493,110 +778,108 @@
       'r4_base'
     ];
 
-    // Diccionario completo de equivalencias Inglés (mcoc.gg) -> Español
-    const EN_TO_ES_NAMES = {
-      "captain britain": "Capitana Britania",
-      "mister sinister": "Mister Siniestro",
-      "doctor doom": "Doctor Doom",
-      "scarlet witch": "Bruja Escarlata",
-      "scarlet witch (classic)": "Bruja Escarlata (Clásica)",
-      "black widow": "Viuda Negra",
-      "black widow (deadly origin)": "Viuda Negra (Origen Letal)",
-      "black widow (claire voyant)": "Viuda Negra (Claire Voyant)",
-      "deadpool (x-force)": "Deadpool (X-Force)",
-      "magneto (house of x)": "Magneto (House of X)",
-      "spider-man (stark enhanced)": "Spider-Man (Mejorado por Stark)",
-      "spider-man (supreme)": "Spider-Man (Supremo)",
-      "spider-man (stealth suit)": "Spider-Man (Traje de Sigilo)",
-      "spider-man (symbiote)": "Spider-Man (Simbionte)",
-      "spider-man (classic)": "Spider-Man (Clásico)",
-      "spider-man (miles morales)": "Spider-Man (Miles Morales)",
-      "captain america (infinity war)": "Capitán América (Infinity War)",
-      "captain america (sam wilson)": "Capitán América (Sam Wilson)",
-      "captain america": "Capitán América",
-      "captain america (wwii)": "Capitán América (IIGM)",
-      "iron man (infamous)": "Iron Man (Infame)",
-      "iron man (infinity war)": "Iron Man (Infinity War)",
-      "black panther": "Pantera Negra",
-      "black panther (civil war)": "Pantera Negra (Civil War)",
-      "abomination (immortal)": "Abominación (Inmortal)",
-      "hulk (immortal)": "Hulk (Inmortal)",
-      "the serpent": "La Serpiente",
-      "the destroyer": "El Destructor",
-      "the leader": "El Líder",
-      "the overseer": "El Maestro",
-      "the hood": "The Hood",
-      "the champion": "El Campeón",
-      "absorbing man": "Hombre Absorbente",
-      "mole man": "Hombre Topo",
-      "dragon man": "Hombre Dragón",
-      "man-thing": "Hombre Cosa",
-      "sandman": "Hombre de Arena",
-      "iceman": "Hombre de Hielo",
-      "human torch": "Antorcha Humana",
-      "invisible woman": "Mujer Invisible",
-      "thing": "La Cosa",
-      "mister fantastic": "Míster Fantástico",
-      "mister negative": "Míster Negativo",
-      "doctor strange": "Doctor Extraño",
-      "doctor voodoo": "Doctor Vudú",
-      "doctor octopus": "Doctor Octopus",
-      "sorcerer supreme": "Hechicera Suprema",
-      "symbiote supreme": "Simbionte Supremo",
-      "corvus glaive": "Corvus Glaive",
-      "proxima midnight": "Próxima Midnight",
-      "ebony maw": "Ebony Maw",
-      "cull obsidian": "Cull Obsidian",
-      "silver surfer": "Silver Surfer",
-      "cosmic ghost rider": "Motorista Fantasma Cósmico",
-      "ghost rider": "Motorista Fantasma",
-      "red skull": "Cráneo Rojo",
-      "red guardian": "Guardián Rojo",
-      "red goblin": "Duende Rojo",
-      "red hulk": "Hulk Rojo",
-      "green goblin": "Duende Verde",
-      "black cat": "Gata Negra",
-      "white tiger": "Tigre Blanco",
-      "Emma Frost": "Emma Frost",
-      "storm": "Tormenta",
-      "storm (pyramid x)": "Tormenta (Pirámide X)",
-      "archangel": "Arcángel",
-      "beast": "Bestia",
-      "colossus": "Coloso",
-      "unstoppable colossus": "Coloso Imparable",
-      "nightcrawler": "Rondador Nocturno",
-      "wolverine": "Lobezno",
-      "wolverine (weapon x)": "Lobezno (Arma X)",
-      "wolverine (x-23)": "Lobezno (X-23)",
-      "old man logan": "El Viejo Logan",
-      "rogue": "Pícara",
-      "cyclops (blue team)": "Cíclope (Equipo Azul)",
-      "cyclops (new xavier school)": "Cíclope (Nueva Escuela Xavier)",
-      "squirrel girl": "Chica Ardilla",
-      "hawkeye": "Ojo de Halcón",
-      "winter soldier": "Soldado de Invierno",
-      "black bolt": "Rayo Negro",
-      "moon knight": "Caballero Luna",
-      "iron fist": "Puño de Hierro",
-      "iron fist (immortal)": "Puño de Hierro (Inmortal)",
-      "ghost": "Fantasma",
-      "wasp": "Avispa",
-      "yellowjacket": "Chaqueta Amarilla",
-      "vulture": "Buitre",
-      "sentinel": "Centinela",
-      "omega sentinel": "Centinela Omega",
-      "war machine": "Máquina de Guerra",
-      "valkyrie": "Valquiria",
-      "enchantress": "Encantadora",
-      "werewolf by night": "Hombre Lobo",
-      "count nefaria": "Conde Nefaria",
-      "king groot": "Rey Groot",
-      "king groot (deathless)": "Rey Groot (Sin Muerte)",
-      "guillotine (deathless)": "Guillotine (Sin Muerte)",
-      "thanos (deathless)": "Thanos (Sin Muerte)",
-      "she-hulk (deathless)": "Hulka (Sin Muerte)",
-      "vision (deathless)": "Visión (Sin Muerte)",
-      "she-hulk": "Hulka"
+    // Equivalencias Inglés (mcoc.gg) -> Variantes en Español
+    const EN_TO_ES_ALIASES = {
+      "captain britain": ["Capitana Britania", "Captain Britain"],
+      "mister sinister": ["Mister Siniestro", "Mr Siniestro", "Mister Sinister"],
+      "doctor doom": ["Doctor Doom", "Doctor Muerte", "Dr Doom"],
+      "scarlet witch": ["Bruja Escarlata", "Scarlet Witch"],
+      "scarlet witch (classic)": ["Bruja Escarlata (Clásica)", "Bruja Escarlata Clasica"],
+      "black widow": ["Viuda Negra", "Black Widow"],
+      "black widow (deadly origin)": ["Viuda Negra (Origen Letal)", "Viuda Negra (Origen Mortal)", "Black Widow (Deadly Origin)"],
+      "black widow (claire voyant)": ["Viuda Negra (Claire Voyant)", "Black Widow (Claire Voyant)", "Claire Voyant"],
+      "deadpool (x-force)": ["Deadpool (X-Force)", "Deadpool X-Force"],
+      "magneto (house of x)": ["Magneto (House of X)", "Magneto (Casa de X)", "Magneto Blanco"],
+      "spider-man (stark enhanced)": ["Spider-Man (Mejorado por Stark)", "Spider-Man Stark", "Spider-Man (Stark Enhanced)"],
+      "spider-man (supreme)": ["Spider-Man (Supremo)", "Spider-Man Supremo", "Spider-Man (Supreme)"],
+      "spider-man (stealth suit)": ["Spider-Man (Traje de Sigilo)", "Spider-Man Sigilo", "Spider-Man (Stealth Suit)"],
+      "spider-man (symbiote)": ["Spider-Man (Simbionte)", "Spider-Man Simbionte", "Spider-Man (Symbiote)"],
+      "spider-man (classic)": ["Spider-Man (Clásico)", "Spider-Man Clasico", "Spider-Man (Classic)", "Spider-Man"],
+      "spider-man (miles morales)": ["Spider-Man (Miles Morales)", "Miles Morales"],
+      "spider-man (pavitr prabhakar)": ["Spider-Man (Pavitr Prabhakar)", "Pavitr Prabhakar"],
+      "captain america (infinity war)": ["Capitán América (Infinity War)", "Capitan America (Infinity War)", "Captain America (Infinity War)"],
+      "captain america (sam wilson)": ["Capitán América (Sam Wilson)", "Sam Wilson", "Captain America (Sam Wilson)"],
+      "captain america": ["Capitán América", "Capitan America", "Captain America"],
+      "captain america (wwii)": ["Capitán América (IIGM)", "Capitán América (WWII)", "Captain America (WWII)"],
+      "iron man (infamous)": ["Iron Man (Infame)", "Infamous Iron Man", "Iron Man (Infamous)"],
+      "iron man (infinity war)": ["Iron Man (Infinity War)"],
+      "black panther": ["Pantera Negra", "Black Panther"],
+      "black panther (civil war)": ["Pantera Negra (Civil War)", "Black Panther (Civil War)"],
+      "abomination (immortal)": ["Abominación (Inmortal)", "Abominacion Inmortal", "Abomination (Immortal)"],
+      "hulk (immortal)": ["Hulk (Inmortal)", "Hulk Inmortal", "Hulk (Immortal)"],
+      "the serpent": ["La Serpiente", "The Serpent", "Serpiente"],
+      "the destroyer": ["El Destructor", "The Destroyer", "Destructor"],
+      "the leader": ["El Líder", "El Lider", "The Leader"],
+      "the overseer": ["El Maestro", "Supervisor", "The Overseer", "Overseer"],
+      "the hood": ["The Hood", "El Encapuchado", "Hood"],
+      "the champion": ["El Campeón", "El Campeon", "The Champion"],
+      "absorbing man": ["Hombre Absorbente", "Absorbing Man"],
+      "mole man": ["Hombre Topo", "Mole Man"],
+      "dragon man": ["Hombre Dragón", "Hombre Dragon", "Dragon Man"],
+      "man-thing": ["Hombre Cosa", "Man-Thing"],
+      "sandman": ["Hombre de Arena", "Sandman"],
+      "iceman": ["Hombre de Hielo", "Iceman"],
+      "human torch": ["Antorcha Humana", "Human Torch"],
+      "invisible woman": ["Mujer Invisible", "Invisible Woman"],
+      "thing": ["La Cosa", "Thing"],
+      "mister fantastic": ["Míster Fantástico", "Mister Fantastico", "Mister Fantastic"],
+      "mister negative": ["Míster Negativo", "Mister Negativo", "Mister Negative"],
+      "doctor strange": ["Doctor Extraño", "Doctor Strange"],
+      "doctor voodoo": ["Doctor Vudú", "Doctor Vudu", "Doctor Voodoo"],
+      "sorcerer supreme": ["Hechicera Suprema", "Sorcerer Supreme"],
+      "symbiote supreme": ["Simbionte Supremo", "Symbiote Supreme"],
+      "cosmic ghost rider": ["Motorista Fantasma Cósmico", "Ghost Rider Cósmico", "Cosmic Ghost Rider"],
+      "ghost rider": ["Motorista Fantasma", "Ghost Rider"],
+      "red skull": ["Cráneo Rojo", "Craneo Rojo", "Red Skull"],
+      "red guardian": ["Guardián Rojo", "Guardian Rojo", "Red Guardian"],
+      "red goblin": ["Duende Rojo", "Red Goblin"],
+      "red hulk": ["Hulk Rojo", "Red Hulk"],
+      "green goblin": ["Duende Verde", "Green Goblin"],
+      "black cat": ["Gata Negra", "Black Cat"],
+      "white tiger": ["Tigre Blanco", "White Tiger"],
+      "storm": ["Tormenta", "Storm"],
+      "storm (pyramid x)": ["Tormenta (Pirámide X)", "Tormenta Piramide X", "Storm (Pyramid X)"],
+      "archangel": ["Arcángel", "Arcangel", "Archangel"],
+      "beast": ["Bestia", "Beast"],
+      "colossus": ["Coloso", "Colossus"],
+      "colossus (age of apocalypse)": ["Coloso (Era de Apocalipsis)", "Colossus (Age of Apocalypse)"],
+      "unstoppable colossus": ["Coloso Imparable", "Unstoppable Colossus"],
+      "nightcrawler": ["Rondador Nocturno", "Nightcrawler"],
+      "wolverine": ["Lobezno", "Wolverine"],
+      "wolverine (weapon x)": ["Lobezno (Arma X)", "Wolverine (Weapon X)", "Arma X"],
+      "wolverine (x-23)": ["Lobezno (X-23)", "X-23", "Wolverine (X-23)"],
+      "old man logan": ["El Viejo Logan", "Viejo Logan", "Old Man Logan"],
+      "rogue": ["Pícara", "Picara", "Rogue"],
+      "cyclops (blue team)": ["Cíclope (Equipo Azul)", "Ciclope (Equipo Azul)", "Cyclops (Blue Team)"],
+      "cyclops (new xavier school)": ["Cíclope (Nueva Escuela Xavier)", "Cyclops (New Xavier School)"],
+      "squirrel girl": ["Chica Ardilla", "Squirrel Girl"],
+      "hawkeye": ["Ojo de Halcón", "Ojo de Halcon", "Hawkeye"],
+      "winter soldier": ["Soldado de Invierno", "Winter Soldier"],
+      "black bolt": ["Rayo Negro", "Black Bolt"],
+      "moon knight": ["Caballero Luna", "Moon Knight"],
+      "mr. knight": ["Mr. Knight", "Sr. Caballero", "Mr Knight"],
+      "iron fist": ["Puño de Hierro", "Puno de Hierro", "Iron Fist"],
+      "iron fist (immortal)": ["Puño de Hierro (Inmortal)", "Iron Fist (Immortal)"],
+      "ghost": ["Fantasma", "Ghost"],
+      "wasp": ["Avispa", "Wasp"],
+      "yellowjacket": ["Chaqueta Amarilla", "Yellowjacket"],
+      "vulture": ["Buitre", "Vulture"],
+      "sentinel": ["Centinela", "Sentinel"],
+      "omega sentinel": ["Centinela Omega", "Omega Sentinel"],
+      "war machine": ["Máquina de Guerra", "Maquina de Guerra", "War Machine"],
+      "valkyrie": ["Valquiria", "Valkyrie"],
+      "enchantress": ["Encantadora", "Enchantress"],
+      "werewolf by night": ["Hombre Lobo", "Werewolf By Night"],
+      "count nefaria": ["Conde Nefaria", "Count Nefaria"],
+      "king groot": ["Rey Groot", "King Groot"],
+      "king groot (deathless)": ["Rey Groot (Sin Muerte)", "King Groot (Deathless)"],
+      "guillotine (deathless)": ["Guillotine (Sin Muerte)", "Guillotine (Deathless)"],
+      "thanos (deathless)": ["Thanos (Sin Muerte)", "Thanos (Deathless)"],
+      "she-hulk (deathless)": ["Hulka (Sin Muerte)", "She-Hulk (Deathless)"],
+      "vision (deathless)": ["Visión (Sin Muerte)", "Vision (Deathless)"],
+      "she-hulk": ["Hulka", "She-Hulk"],
+      "high evolutionary": ["Alto Evolucionador", "High Evolutionary"],
+      "lizard": ["Lagarto", "El Lagarto", "Lizard"]
     };
 
     let characters = [];
@@ -613,19 +896,12 @@
 
     function findMatchingChar(enName) {
       const cleanEn = enName.toLowerCase().trim();
-      const mappedEs = EN_TO_ES_NAMES[cleanEn] || enName;
-      const normEn = normalizeStr(enName);
-      const normEs = normalizeStr(mappedEs);
+      const candidates = [enName, ...(EN_TO_ES_ALIASES[cleanEn] || [])].map(normalizeStr);
 
-      // 1. Coincidencia exacta normalizada (sin tildes ni símbolos)
-      let found = characters.find(c => {
+      return characters.find(c => {
         const cNorm = normalizeStr(c.name);
-        return cNorm === normEs || cNorm === normEn;
+        return candidates.includes(cNorm);
       });
-      if (found) return found;
-
-      // 2. Coincidencia quitando paréntesis si en la Tier List lo llamó sin paréntesis o parecido
-      return characters.find(c => normalizeStr(c.name) === normEs);
     }
 
     function getCharTierTags(ch) {
@@ -758,7 +1034,7 @@
       const btnAdd = document.getElementById('btnAddChar');
       const btnTags = document.getElementById('btnManageTags');
       const btnImport = document.getElementById('btnImportPrestige');
-      const btnQuick = document.getElementById('btnQuickSync');
+      const btnAutoFill = document.getElementById('btnAutoFillPrestige');
       const bench = document.getElementById('sidebarBench');
       const btnAuth = document.getElementById('btnAdminAuth');
 
@@ -768,7 +1044,7 @@
         btnAdd.classList.remove('hidden');
         btnTags.classList.remove('hidden');
         btnImport.classList.remove('hidden');
-        btnQuick.classList.remove('hidden');
+        btnAutoFill.classList.remove('hidden');
         bench.classList.remove('hidden');
         btnAuth.innerText = 'Cerrar sesión';
       } else {
@@ -777,7 +1053,7 @@
         btnAdd.classList.add('hidden');
         btnTags.classList.add('hidden');
         btnImport.classList.add('hidden');
-        btnQuick.classList.add('hidden');
+        btnAutoFill.classList.add('hidden');
         bench.classList.add('hidden');
         btnAuth.innerText = '🔒 Acceso Admin';
       }
@@ -820,8 +1096,12 @@
     }
 
     // =========================================================================
-    // SINCRONIZADOR 1-CLIC Y PARSER EXACTO DE BLOQUES MCOC.GG
+    // AUTO-RELLENADO EN 1 CLIC SIN COPIAR NI PEGAR (TABLA MCOC.GG INTEGRADA)
     // =========================================================================
+    function autoFillOfficialPrestige() {
+      processMcocRawText(OFFICIAL_MCOC_GG_RAW);
+    }
+
     function openImportModal() {
       document.getElementById('importTextarea').value = '';
       document.getElementById('importModal').classList.remove('hidden');
@@ -833,99 +1113,84 @@
       document.getElementById('importModal').classList.remove('flex');
     }
 
-    async function syncFromClipboardOneClick() {
-      try {
-        const clipText = await navigator.clipboard.readText();
-        if (!clipText || !clipText.trim()) {
-          alert("El portapapeles está vacío. Copia primero la tabla o usa el botón de extracción en mcoc.gg.");
-          return;
-        }
-        processPrestigeInput(clipText);
-      } catch (err) {
-        openImportModal();
-      }
-    }
-
-    function processPrestigeInput(rawText) {
+    function processMcocRawText(rawText) {
       const text = (rawText || '').trim();
-      if (!text) {
-        alert("No hay datos para procesar.");
-        return;
-      }
+      if (!text) return;
+
+      // Primero limpiamos cualquier prestigio corrupto (como el 47 o 1604 que se había guardado antes)
+      characters.forEach(c => {
+        if (c.prestige && c.prestige.r5_a2 && c.prestige.r5_a2 < 1000) {
+          c.prestige = { r5_a2: 0, r5_a1: 0, r5_base: 0, r4_a2: 0, r4_a1: 0, r4_base: 0 };
+        }
+      });
 
       let updatedCount = 0;
 
-      // 1. Si viene en JSON directo (desde el Bookmarklet / Consola de mcoc.gg)
-      if (text.startsWith('[') || text.startsWith('{')) {
-        try {
-          const arr = JSON.parse(text);
-          const list = Array.isArray(arr) ? arr : [arr];
-          list.forEach(item => {
-            const charObj = findMatchingChar(item.name || '');
-            if (charObj) {
-              charObj.prestige = {
-                r4_base: Number(item.r4_base) || 0,
-                r4_a1:   Number(item.r4_a1) || 0,
-                r4_a2:   Number(item.r4_a2) || 0,
-                r5_base: Number(item.r5_base) || 0,
-                r5_a1:   Number(item.r5_a1) || 0,
-                r5_a2:   Number(item.r5_a2) || 0
-              };
-              updatedCount++;
-            }
-          });
-          persistChanges();
-          closeImportModal();
-          if (currentMainView === 'prestige') renderPrestigeView();
-          alert(`⚡ ¡Sincronización completada! ${updatedCount} personajes actualizados en Firebase.`);
-          return;
-        } catch (e) {
-          alert("Error leyendo JSON: " + e.message);
-          return;
+      // Analizador línea a línea de la estructura real de mcoc.gg:
+      // Línea 0: Star-Lord (Kitty Pryde)47,4601
+      // Línea 1: 34,33037,07040,03040,70043,95047,460High Evolutionary47,3502
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Champion') && !l.startsWith('Prestige'));
+
+      let currentCharName = null;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (i === 0 || !/^(\d{2},\d{3}|-)/.test(line)) {
+          // Es una cabecera de personaje inicial: "Star-Lord (Kitty Pryde)47,4601"
+          const mHeader = line.match(/^(.+?)\d{1,2},\d{3}(?:T?\d+)$/);
+          if (mHeader) {
+            currentCharName = mHeader[1].trim();
+          }
+          continue;
         }
-      }
 
-      // 2. Si viene del copiado directo de mcoc.gg donde los números van pegados en la misma línea:
-      // Ejemplo real:
-      // Star-Lord (Kitty Pryde)47,4601
-      // 34,33037,07040,03040,70043,95047,460High Evolutionary47,3502
-      // 34,230--40,590--Yelena Belova40,580115
-      const regexBlock = /([A-Za-z0-9\.\-\'\s\(\)]+?)\s*(\d{1,2},\d{3}|\d{3})\s*(?:T?\d+)\s*[\r\n]+([0-9,\-]+)/g;
-      let match;
-      while ((match = regexBlock.exec(text)) !== null) {
-        let rawName = match[1].trim();
-        let valsStr = match[3].trim();
-
-        // Extraer exactamente los 6 tokens (ya sean números con formato XX,XXX o guiones '-')
-        let tokens = [];
-        const tokenRegex = /(\d{2},\d{3})|(-)/g;
-        let tMatch;
-        while ((tMatch = tokenRegex.exec(valsStr)) !== null && tokens.length < 6) {
-          if (tMatch[1]) {
-            tokens.push(Number(tMatch[1].replace(/,/g, '')));
+        // La línea empieza por los 6 valores pegados (ej: "34,33037,07040,03040,70043,95047,460High Evolutionary47,3502" o "34,210--40,590--Yelena Belova40,580115")
+        let cursor = 0;
+        let vals = [];
+        while (vals.length < 6 && cursor < line.length) {
+          const rest = line.slice(cursor);
+          const mNum = rest.match(/^(\d{2},\d{3})/);
+          if (mNum) {
+            vals.push(Number(mNum[1].replace(/,/g, '')));
+            cursor += mNum[1].length;
+          } else if (rest.startsWith('-')) {
+            vals.push(0);
+            cursor += 1;
           } else {
-            tokens.push(0);
+            break;
           }
         }
 
-        const charObj = findMatchingChar(rawName);
-        if (charObj && tokens.length > 0) {
-          charObj.prestige = {
-            r4_base: tokens[0] || 0,
-            r4_a1:   tokens[1] || 0,
-            r4_a2:   tokens[2] || 0,
-            r5_base: tokens[3] || 0,
-            r5_a1:   tokens[4] || 0,
-            r5_a2:   tokens[5] || 0
-          };
-          updatedCount++;
+        if (currentCharName && vals.length === 6) {
+          const charObj = findMatchingChar(currentCharName);
+          if (charObj) {
+            charObj.prestige = {
+              r4_base: vals[0] || 0,
+              r4_a1:   vals[1] || 0,
+              r4_a2:   vals[2] || 0,
+              r5_base: vals[3] || 0,
+              r5_a1:   vals[4] || 0,
+              r5_a2:   vals[5] || 0
+            };
+            updatedCount++;
+          }
+        }
+
+        // El resto de la línea contiene el nombre del SIGUIENTE personaje + su Max Obtainable + su Puesto
+        const remainder = line.slice(cursor).trim();
+        const mNext = remainder.match(/^(.+?)(?:\d{1,2},\d{3}|\d{3})(?:T?\d+)$/);
+        if (mNext) {
+          currentCharName = mNext[1].trim();
+        } else {
+          currentCharName = null;
         }
       }
 
       persistChanges();
       closeImportModal();
-      if (currentMainView === 'prestige') renderPrestigeView();
-      alert(`⚡ ¡Sincronización completada! Se han actualizado correctamente ${updatedCount} personajes en Firebase.`);
+      renderPrestigeView();
+      alert(`✅ ¡Listo! Se han reparado y actualizado automáticamente los 6 rangos de prestigio de ${updatedCount} personajes en tu Firebase.`);
     }
 
     // =========================================================================
