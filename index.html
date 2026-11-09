@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Tier List & Prestigio MCOC - TheShori</title>
+  <title>Tier List MCOC - TheShori</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
   
@@ -42,22 +42,12 @@
 </head>
 <body class="h-screen overflow-hidden flex flex-col">
 
-  <!-- BARRA SUPERIOR CON PESTAÑAS -->
+  <!-- BARRA SUPERIOR -->
   <header class="bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-3 flex flex-wrap justify-between items-center gap-3 flex-shrink-0 z-30">
     <div class="flex items-center gap-4">
       <span class="text-xl md:text-2xl font-extrabold tracking-wider bg-gradient-to-r from-purple-400 to-amber-400 bg-clip-text text-transparent">
-        THESHORI MCOC
+        📊 TIER LIST MCOC - THESHORI
       </span>
-
-      <div class="flex bg-gray-950 p-1 rounded-xl border border-gray-800">
-        <button id="tabBtnTier" onclick="switchMainView('tierlist')" class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition bg-purple-600 text-white shadow">
-          📊 Tier List
-        </button>
-        <button id="tabBtnPrestige" onclick="switchMainView('prestige')" class="px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition text-gray-400 hover:text-white">
-          🏆 Prestigio (x200)
-        </button>
-      </div>
-
       <span id="statusBadge" class="hidden sm:inline-block text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700">
         Modo Visitante
       </span>
@@ -66,15 +56,6 @@
     <div class="flex items-center gap-2.5">
       <button onclick="toggleFilterPanel()" id="btnToggleFilters" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 px-3 py-1.5 rounded-lg text-xs font-medium transition">
         🔼 Ocultar Filtros
-      </button>
-
-      <!-- BOTÓN AUTOMÁTICO 1-CLIC -->
-      <button id="btnAutoFillPrestige" onclick="autoFillOfficialPrestige()" class="hidden bg-amber-500 hover:bg-amber-400 text-black font-extrabold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition shadow-lg">
-        ⚡ Auto-Rellenar Prestigios (1-Clic)
-      </button>
-
-      <button id="btnImportPrestige" onclick="openImportModal()" class="hidden bg-emerald-700 hover:bg-emerald-600 text-white font-semibold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition">
-        📥 Pegar Manual
       </button>
 
       <button id="btnManageTags" onclick="openTagsManagerModal()" class="hidden bg-sky-700 hover:bg-sky-600 text-white font-semibold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition">
@@ -108,8 +89,8 @@
     </div>
   </section>
 
-  <!-- VISTA 1: TIER LIST -->
-  <div id="viewTierList" class="flex flex-1 min-h-0 overflow-hidden">
+  <!-- TABLERO TIER LIST -->
+  <div class="flex flex-1 min-h-0 overflow-hidden">
     <main id="tiersScrollArea" class="flex-1 h-full p-4 md:p-6 overflow-y-auto overflow-x-auto">
       <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto pb-12"></div>
     </main>
@@ -141,56 +122,6 @@
     </aside>
   </div>
 
-  <!-- VISTA 2: RANKING DE PRESTIGIO -->
-  <div id="viewPrestige" class="hidden flex-1 min-h-0 overflow-y-auto p-4 md:p-6">
-    <div class="max-w-7xl mx-auto space-y-5 pb-12">
-      
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 shadow-lg space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 class="text-lg md:text-xl font-extrabold text-amber-400 flex items-center gap-2">
-              🏆 Tabla de Prestigio MCOC (Base Singularidad x200)
-            </h2>
-            <p class="text-xs text-gray-400">
-              Muestra todos los rangos por defecto. Si seleccionas uno en concreto, la tabla mostrará y ordenará exclusivamente ese rango.
-            </p>
-          </div>
-
-          <!-- Selector de Prioridad / Rango Específico -->
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="text-xs font-bold text-gray-400 uppercase">Prioridad de Orden:</span>
-            <select id="prestigeSortSelect" onchange="renderPrestigeView()" class="bg-gray-950 border border-amber-500/50 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 focus:outline-none">
-              <option value="cascade_r5a2">Automático en Cascada (Todos los Rangos)</option>
-              <option value="r5_a2">7★ Rango 5 - Ascensión 2 (x200)</option>
-              <option value="r5_a1">7★ Rango 5 - Ascensión 1 (x200)</option>
-              <option value="r5_base">7★ Rango 5 (x200)</option>
-              <option value="r4_a2">7★ Rango 4 - Ascensión 2 (x200)</option>
-              <option value="r4_a1">7★ Rango 4 - Ascensión 1 (x200)</option>
-              <option value="r4_base">7★ Rango 4 (x200)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-gray-800">
-          <div id="prestigeClassFilterBar" class="flex flex-wrap gap-1.5"></div>
-          <input type="text" id="prestigeSearchInput" oninput="renderPrestigeView()" placeholder="🔍 Buscar personaje..." class="bg-gray-950 border border-gray-700 rounded-xl px-3.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400 md:w-64">
-        </div>
-      </div>
-
-      <div class="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse min-w-[650px]">
-            <thead>
-              <tr id="prestigeTableHeadRow" class="bg-gray-950/90 border-b border-gray-800 text-[11px] font-extrabold uppercase tracking-wider text-gray-400"></tr>
-            </thead>
-            <tbody id="prestigeTableBody" class="divide-y divide-gray-800/70 text-xs"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
   <!-- MODAL LOGIN ADMIN -->
   <div id="loginModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
@@ -218,26 +149,6 @@
     </div>
   </div>
 
-  <!-- MODAL DE IMPORTACIÓN MANUAL -->
-  <div id="importModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl flex flex-col max-h-[90vh]">
-      <div class="flex justify-between items-center mb-3">
-        <h3 class="text-lg font-bold text-emerald-400">📥 Pegar Texto de mcoc.gg</h3>
-        <button onclick="closeImportModal()" class="text-gray-400 hover:text-white text-xl">&times;</button>
-      </div>
-      <p class="text-xs text-gray-300 mb-3 leading-relaxed">
-        Si algún día salen nuevos personajes en <code>mcoc.gg</code>, puedes pegar aquí el bloque copiado directamente de su tabla.
-      </p>
-      
-      <textarea id="importTextarea" rows="12" placeholder='Pega aquí el texto copiado de mcoc.gg...' class="w-full bg-gray-950 border border-gray-700 rounded-xl p-3 text-xs font-mono text-white focus:outline-none focus:border-emerald-500 mb-4 flex-1"></textarea>
-
-      <div class="flex justify-end gap-2">
-        <button onclick="closeImportModal()" class="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs">Cancelar</button>
-        <button onclick="processMcocRawText(document.getElementById('importTextarea').value)" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs">Actualizar Firebase</button>
-      </div>
-    </div>
-  </div>
-
   <!-- MODAL GESTOR DE ETIQUETAS -->
   <div id="tagsManagerModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-xl w-full p-6 shadow-2xl max-h-[85vh] flex flex-col">
@@ -255,7 +166,7 @@
     </div>
   </div>
 
-  <!-- MODAL CREAR / EDITAR PERSONAJE -->
+  <!-- MODAL CREAR / EDITAR PERSONAJE (CON AUTOCOMPLETADO DE PRESTIGIOS) -->
   <div id="formModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
@@ -290,7 +201,7 @@
 
         <div class="bg-gray-950/80 p-3.5 rounded-xl border border-amber-500/30 space-y-3">
           <label class="block text-amber-400 font-bold text-xs uppercase tracking-wider">
-            🏆 Prestigio del Personaje (Todos en Base Singularidad x200)
+            🏆 Prestigio del Personaje (Se autocompleta al escribir el nombre si está en la lista)
           </label>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
             <div class="bg-amber-950/20 p-2 rounded-lg border border-amber-500/30">
@@ -708,63 +619,6 @@
 31,340--37,160--Scarlet Witch (Classic)37,070280
 31,260--37,070--`;
 
-    const TIER_TAGS = [
-      { id: 'asc7',       label: '⬆️ Ascensión 7 Estrellas', emoji: '⬆️', color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
-      { id: 'gbasico',    label: '💜 7 Estrellas Grupo Básico', emoji: '💜', color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
-      { id: 'gtitan',     label: '💚 7 Estrellas Cristal Titán', emoji: '💚', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
-      { id: 'glealtad',   label: '🩷 7 Estrellas Cristal Lealtad', emoji: '🩷', color: 'bg-pink-950/90 text-pink-300 border-pink-700/80' },
-      { id: 'gincursion', label: '💛 7 Estrellas Cristal Incursión', emoji: '💛', color: 'bg-amber-950/90 text-amber-300 border-amber-700/80' },
-      { id: 'geventos',   label: '🖤 7 Estrellas Eventos', emoji: '🖤', color: 'bg-gray-800 text-gray-200 border-gray-600' },
-      { id: 'gsagas',     label: '🩷 7 Estrellas Sagas', emoji: '🩷', color: 'bg-rose-950/90 text-rose-300 border-rose-700/80' },
-      { id: 'gvalentin',  label: '💖 7 Estrellas San Valentín', emoji: '💖', color: 'bg-red-950/90 text-red-300 border-red-700/80' },
-      { id: 'gbanquete',  label: '🩶 7 Estrellas Banquete 2025', emoji: '🩶', color: 'bg-slate-800 text-slate-200 border-slate-600' },
-      { id: 'habilidad',  label: '⭐ Habilidad Despertada', emoji: '⭐', color: 'bg-yellow-950/90 text-yellow-300 border-yellow-700/80' },
-      { id: 'singalta',   label: '🔝 Singularidad Alta', emoji: '🔝', color: 'bg-orange-950/90 text-orange-300 border-orange-700/80' },
-      { id: 'suicidas',   label: '💀 Amigable Maestrías Suicidas', emoji: '💀', color: 'bg-stone-900 text-stone-300 border-stone-700' },
-      { id: 'sinergias',  label: '🤝 Se Vuelve Mejor con Sinergias', emoji: '🤝', color: 'bg-teal-950/90 text-teal-300 border-teal-700/80' },
-      { id: 'saberjugar', label: '🎮 Requiere Saber Jugar Con Él', emoji: '🎮', color: 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80' },
-      { id: 'defensor',   label: '🛡️ Gran Defensor', emoji: '🛡️', color: 'bg-cyan-950/90 text-cyan-300 border-cyan-700/80' },
-      { id: 'construccion', label: '🔨 Requiere Construcción', emoji: '🔨', color: 'bg-amber-900/80 text-amber-200 border-amber-600' },
-      { id: 'polvos',     label: '💎 Polvos Primordiales', emoji: '💎', color: 'bg-sky-950/90 text-sky-300 border-sky-700/80' },
-      { id: 'hasta6',     label: '🟦 Disponible Hasta 6 Estrellas', emoji: '🟦', color: 'bg-blue-900/80 text-blue-200 border-blue-600' },
-      { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', emoji: '🔴', color: 'bg-red-900/80 text-red-200 border-red-600' }
-    ];
-
-    const GAME_TAG_GROUPS = [
-      "SAGA",
-      "ESTILO DE COMBATE",
-      "ATRIBUTOS",
-      "ORGANIZACION",
-      "FECHA DE LANZAMIENTO"
-    ];
-
-    const TIERS = [
-      { id: 'GOAT',        name: 'GOAT TIER',        color: 'from-amber-400 via-yellow-500 to-amber-600 text-black border-yellow-400' },
-      { id: 'GOD',         name: 'GOD TIER',         color: 'from-purple-600 via-indigo-600 to-purple-700 text-white border-purple-500' },
-      { id: 'SEMIGOD',     name: 'SEMI-GOD TIER',    color: 'from-blue-600 via-cyan-600 to-blue-700 text-white border-cyan-500' },
-      { id: 'USABLES',     name: 'USABLES TIER',     color: 'from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-500' },
-      { id: 'OCASIONALES', name: 'OCASIONALES TIER', color: 'from-orange-600 via-amber-700 to-orange-800 text-white border-orange-500' },
-      { id: 'MEME',        name: 'MEME TIER',        color: 'from-red-700 via-rose-900 to-red-950 text-white border-red-600' }
-    ];
-
-    const CLASES = [
-      { id: 'Mutante',     label: 'MUTANTES',     headerStyle: 'bg-yellow-950/40 text-yellow-400 border-yellow-700/50' },
-      { id: 'Habil',       label: 'HÁBILES',      headerStyle: 'bg-red-950/40 text-red-400 border-red-700/50' },
-      { id: 'Cientifico',  label: 'CIENTÍFICOS',  headerStyle: 'bg-green-950/40 text-green-400 border-green-700/50' },
-      { id: 'Mistico',     label: 'MÍSTICOS',     headerStyle: 'bg-purple-950/40 text-purple-400 border-purple-700/50' },
-      { id: 'Cosmico',     label: 'CÓSMICOS',     headerStyle: 'bg-sky-950/40 text-sky-400 border-sky-700/50' },
-      { id: 'Tecnologico', label: 'TECNOLÓGICOS', headerStyle: 'bg-blue-950/40 text-blue-400 border-blue-700/50' }
-    ];
-
-    const PRESTIGE_KEYS_HIERARCHY = [
-      'r5_a2',
-      'r5_a1',
-      'r5_base',
-      'r4_a2',
-      'r4_a1',
-      'r4_base'
-    ];
-
     const EN_TO_ES_ALIASES = {
       "captain britain": ["Capitana Britania", "Captain Britain"],
       "mister sinister": ["Mister Siniestro", "Mr Siniestro", "Mister Sinister"],
@@ -873,26 +727,62 @@
       "lizard": ["Lagarto", "El Lagarto", "Lizard"]
     };
 
+    const TIER_TAGS = [
+      { id: 'asc7',       label: '⬆️ Ascensión 7 Estrellas', emoji: '⬆️', color: 'bg-blue-950/90 text-blue-300 border-blue-700/80' },
+      { id: 'gbasico',    label: '💜 7 Estrellas Grupo Básico', emoji: '💜', color: 'bg-purple-950/90 text-purple-300 border-purple-700/80' },
+      { id: 'gtitan',     label: '💚 7 Estrellas Cristal Titán', emoji: '💚', color: 'bg-emerald-950/90 text-emerald-300 border-emerald-700/80' },
+      { id: 'glealtad',   label: '🩷 7 Estrellas Cristal Lealtad', emoji: '🩷', color: 'bg-pink-950/90 text-pink-300 border-pink-700/80' },
+      { id: 'gincursion', label: '💛 7 Estrellas Cristal Incursión', emoji: '💛', color: 'bg-amber-950/90 text-amber-300 border-amber-700/80' },
+      { id: 'geventos',   label: '🖤 7 Estrellas Eventos', emoji: '🖤', color: 'bg-gray-800 text-gray-200 border-gray-600' },
+      { id: 'gsagas',     label: '🩷 7 Estrellas Sagas', emoji: '🩷', color: 'bg-rose-950/90 text-rose-300 border-rose-700/80' },
+      { id: 'gvalentin',  label: '💖 7 Estrellas San Valentín', emoji: '💖', color: 'bg-red-950/90 text-red-300 border-red-700/80' },
+      { id: 'gbanquete',  label: '🩶 7 Estrellas Banquete 2025', emoji: '🩶', color: 'bg-slate-800 text-slate-200 border-slate-600' },
+      { id: 'habilidad',  label: '⭐ Habilidad Despertada', emoji: '⭐', color: 'bg-yellow-950/90 text-yellow-300 border-yellow-700/80' },
+      { id: 'singalta',   label: '🔝 Singularidad Alta', emoji: '🔝', color: 'bg-orange-950/90 text-orange-300 border-orange-700/80' },
+      { id: 'suicidas',   label: '💀 Amigable Maestrías Suicidas', emoji: '💀', color: 'bg-stone-900 text-stone-300 border-stone-700' },
+      { id: 'sinergias',  label: '🤝 Se Vuelve Mejor con Sinergias', emoji: '🤝', color: 'bg-teal-950/90 text-teal-300 border-teal-700/80' },
+      { id: 'saberjugar', label: '🎮 Requiere Saber Jugar Con Él', emoji: '🎮', color: 'bg-indigo-950/90 text-indigo-300 border-indigo-700/80' },
+      { id: 'defensor',   label: '🛡️ Gran Defensor', emoji: '🛡️', color: 'bg-cyan-950/90 text-cyan-300 border-cyan-700/80' },
+      { id: 'construccion', label: '🔨 Requiere Construcción', emoji: '🔨', color: 'bg-amber-900/80 text-amber-200 border-amber-600' },
+      { id: 'polvos',     label: '💎 Polvos Primordiales', emoji: '💎', color: 'bg-sky-950/90 text-sky-300 border-sky-700/80' },
+      { id: 'hasta6',     label: '🟦 Disponible Hasta 6 Estrellas', emoji: '🟦', color: 'bg-blue-900/80 text-blue-200 border-blue-600' },
+      { id: 'hasta5',     label: '🔴 Disponible Hasta 5 Estrellas', emoji: '🔴', color: 'bg-red-900/80 text-red-200 border-red-600' }
+    ];
+
+    const GAME_TAG_GROUPS = [
+      "SAGA",
+      "ESTILO DE COMBATE",
+      "ATRIBUTOS",
+      "ORGANIZACION",
+      "FECHA DE LANZAMIENTO"
+    ];
+
+    const TIERS = [
+      { id: 'GOAT',        name: 'GOAT TIER',        color: 'from-amber-400 via-yellow-500 to-amber-600 text-black border-yellow-400' },
+      { id: 'GOD',         name: 'GOD TIER',         color: 'from-purple-600 via-indigo-600 to-purple-700 text-white border-purple-500' },
+      { id: 'SEMIGOD',     name: 'SEMI-GOD TIER',    color: 'from-blue-600 via-cyan-600 to-blue-700 text-white border-cyan-500' },
+      { id: 'USABLES',     name: 'USABLES TIER',     color: 'from-emerald-600 via-teal-600 to-emerald-700 text-white border-emerald-500' },
+      { id: 'OCASIONALES', name: 'OCASIONALES TIER', color: 'from-orange-600 via-amber-700 to-orange-800 text-white border-orange-500' },
+      { id: 'MEME',        name: 'MEME TIER',        color: 'from-red-700 via-rose-900 to-red-950 text-white border-red-600' }
+    ];
+
+    const CLASES = [
+      { id: 'Mutante',     label: 'MUTANTES',     headerStyle: 'bg-yellow-950/40 text-yellow-400 border-yellow-700/50' },
+      { id: 'Habil',       label: 'HÁBILES',      headerStyle: 'bg-red-950/40 text-red-400 border-red-700/50' },
+      { id: 'Cientifico',  label: 'CIENTÍFICOS',  headerStyle: 'bg-green-950/40 text-green-400 border-green-700/50' },
+      { id: 'Mistico',     label: 'MÍSTICOS',     headerStyle: 'bg-purple-950/40 text-purple-400 border-purple-700/50' },
+      { id: 'Cosmico',     label: 'CÓSMICOS',     headerStyle: 'bg-sky-950/40 text-sky-400 border-sky-700/50' },
+      { id: 'Tecnologico', label: 'TECNOLÓGICOS', headerStyle: 'bg-blue-950/40 text-blue-400 border-blue-700/50' }
+    ];
+
     let characters = [];
     let activeTierFilters = [];
     let activeGameFilters = [];
-    let activePrestigeClass = 'ALL';
-    let currentMainView = 'tierlist';
     let isAdmin = false;
     let sortableInstances = [];
 
     function normalizeStr(s) {
       return (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
-    }
-
-    function findMatchingChar(enName) {
-      const cleanEn = enName.toLowerCase().trim();
-      const candidates = [enName, ...(EN_TO_ES_ALIASES[cleanEn] || [])].map(normalizeStr);
-
-      return characters.find(c => {
-        const cNorm = normalizeStr(c.name);
-        return candidates.includes(cNorm);
-      });
     }
 
     function getOfficialPrestigeForName(targetName) {
@@ -976,46 +866,6 @@
       };
     }
 
-    // Devuelve el prestigio principal que define el puesto en modo cascada o modo único
-    function getPrimaryPrestigeScore(ch, sortMode) {
-      const p = getCharPrestige(ch);
-      if (sortMode !== 'cascade_r5a2') {
-        return p[sortMode] || 0;
-      }
-      for (const k of PRESTIGE_KEYS_HIERARCHY) {
-        if (p[k] > 0) return p[k];
-      }
-      return 0;
-    }
-
-    function switchMainView(viewName) {
-      currentMainView = viewName;
-      const vTier = document.getElementById('viewTierList');
-      const vPres = document.getElementById('viewPrestige');
-      const filtersSec = document.getElementById('filtersSection');
-      const btnToggleF = document.getElementById('btnToggleFilters');
-      const tabTier = document.getElementById('tabBtnTier');
-      const tabPres = document.getElementById('tabBtnPrestige');
-
-      if (viewName === 'tierlist') {
-        vTier.classList.remove('hidden');
-        vPres.classList.add('hidden');
-        filtersSec.classList.remove('hidden');
-        btnToggleF.classList.remove('hidden');
-        tabTier.className = 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition bg-purple-600 text-white shadow';
-        tabPres.className = 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition text-gray-400 hover:text-white';
-        renderBoard();
-      } else {
-        vTier.classList.add('hidden');
-        vPres.classList.remove('hidden');
-        filtersSec.classList.add('hidden');
-        btnToggleF.classList.add('hidden');
-        tabPres.className = 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition bg-amber-500 text-black shadow';
-        tabTier.className = 'px-3.5 py-1.5 rounded-lg text-xs font-extrabold transition text-gray-400 hover:text-white';
-        renderPrestigeView();
-      }
-    }
-
     function toggleFilterPanel() {
       const sec = document.getElementById('filtersSection');
       const btn = document.getElementById('btnToggleFilters');
@@ -1037,9 +887,6 @@
       });
     }
 
-    // =========================================================================
-    // AUTENTICACIÓN
-    // =========================================================================
     auth.onAuthStateChanged(user => {
       if (user && user.email && user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
         setAdminMode(true, user.email);
@@ -1101,8 +948,6 @@
       const badge = document.getElementById('statusBadge');
       const btnAdd = document.getElementById('btnAddChar');
       const btnTags = document.getElementById('btnManageTags');
-      const btnImport = document.getElementById('btnImportPrestige');
-      const btnAutoFill = document.getElementById('btnAutoFillPrestige');
       const bench = document.getElementById('sidebarBench');
       const btnAuth = document.getElementById('btnAdminAuth');
 
@@ -1111,8 +956,6 @@
         badge.className = 'hidden sm:inline-block text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700';
         btnAdd.classList.remove('hidden');
         btnTags.classList.remove('hidden');
-        btnImport.classList.remove('hidden');
-        btnAutoFill.classList.remove('hidden');
         bench.classList.remove('hidden');
         btnAuth.innerText = 'Cerrar sesión';
       } else {
@@ -1120,18 +963,12 @@
         badge.className = 'hidden sm:inline-block text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
         btnAdd.classList.add('hidden');
         btnTags.classList.add('hidden');
-        btnImport.classList.add('hidden');
-        btnAutoFill.classList.add('hidden');
         bench.classList.add('hidden');
         btnAuth.innerText = '🔒 Acceso Admin';
       }
       initDragAndDrop();
-      if (currentMainView === 'prestige') renderPrestigeView();
     }
 
-    // =========================================================================
-    // CARGA Y GUARDADO DE DATOS EN FIREBASE
-    // =========================================================================
     function initData() {
       renderFilterBars();
       renderFormTagInputs();
@@ -1143,11 +980,7 @@
           characters = [];
         }
         renderFilterBars();
-        if (currentMainView === 'tierlist') {
-          renderBoard();
-        } else {
-          renderPrestigeView();
-        }
+        renderBoard();
       }, () => {
         characters = [];
         renderBoard();
@@ -1163,258 +996,6 @@
       }
     }
 
-    function autoFillOfficialPrestige() {
-      processMcocRawText(OFFICIAL_MCOC_GG_RAW);
-    }
-
-    function openImportModal() {
-      document.getElementById('importTextarea').value = '';
-      document.getElementById('importModal').classList.remove('hidden');
-      document.getElementById('importModal').classList.add('flex');
-    }
-
-    function closeImportModal() {
-      document.getElementById('importModal').classList.add('hidden');
-      document.getElementById('importModal').classList.remove('flex');
-    }
-
-    function processMcocRawText(rawText) {
-      const text = (rawText || '').trim();
-      if (!text) return;
-
-      characters.forEach(c => {
-        if (c.prestige && c.prestige.r5_a2 && c.prestige.r5_a2 < 1000) {
-          c.prestige = { r5_a2: 0, r5_a1: 0, r5_base: 0, r4_a2: 0, r4_a1: 0, r4_base: 0 };
-        }
-      });
-
-      let updatedCount = 0;
-      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Champion') && !l.startsWith('Prestige'));
-      let currentCharName = null;
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        if (i === 0 || !/^(\d{2},\d{3}|-)/.test(line)) {
-          const mHeader = line.match(/^(.+?)\d{1,2},\d{3}(?:T?\d+)$/);
-          if (mHeader) currentCharName = mHeader[1].trim();
-          continue;
-        }
-
-        let cursor = 0;
-        let vals = [];
-        while (vals.length < 6 && cursor < line.length) {
-          const rest = line.slice(cursor);
-          const mNum = rest.match(/^(\d{2},\d{3})/);
-          if (mNum) {
-            vals.push(Number(mNum[1].replace(/,/g, '')));
-            cursor += mNum[1].length;
-          } else if (rest.startsWith('-')) {
-            vals.push(0);
-            cursor += 1;
-          } else {
-            break;
-          }
-        }
-
-        if (currentCharName && vals.length === 6) {
-          const charObj = findMatchingChar(currentCharName);
-          if (charObj) {
-            charObj.prestige = {
-              r4_base: vals[0] || 0,
-              r4_a1:   vals[1] || 0,
-              r4_a2:   vals[2] || 0,
-              r5_base: vals[3] || 0,
-              r5_a1:   vals[4] || 0,
-              r5_a2:   vals[5] || 0
-            };
-            updatedCount++;
-          }
-        }
-
-        const remainder = line.slice(cursor).trim();
-        const mNext = remainder.match(/^(.+?)(?:\d{1,2},\d{3}|\d{3})(?:T?\d+)$/);
-        currentCharName = mNext ? mNext[1].trim() : null;
-      }
-
-      persistChanges();
-      closeImportModal();
-      renderPrestigeView();
-      alert(`✅ ¡Listo! Se han actualizado automáticamente los 6 rangos de prestigio de ${updatedCount} personajes en tu Firebase.`);
-    }
-
-    // =========================================================================
-    // RENDERIZADO DE LA PESTAÑA DE PRESTIGIO (CON EMPATES REALES Y RANGO ÚNICO)
-    // =========================================================================
-    function renderPrestigeView() {
-      const classBar = document.getElementById('prestigeClassFilterBar');
-      classBar.innerHTML = '';
-
-      const allBtn = document.createElement('button');
-      allBtn.className = `px-3 py-1 rounded-lg text-xs font-bold border transition ${activePrestigeClass === 'ALL' ? 'bg-amber-500 text-black border-amber-400' : 'bg-gray-950 text-gray-400 border-gray-800 hover:text-white'}`;
-      allBtn.innerText = 'Todas las Clases';
-      allBtn.onclick = () => { activePrestigeClass = 'ALL'; renderPrestigeView(); };
-      classBar.appendChild(allBtn);
-
-      CLASES.forEach(cl => {
-        const btn = document.createElement('button');
-        const active = activePrestigeClass === cl.id;
-        btn.className = `px-3 py-1 rounded-lg text-xs font-bold border transition ${cl.headerStyle} ${active ? 'ring-2 ring-white opacity-100' : 'opacity-60 hover:opacity-100'}`;
-        btn.innerText = cl.label;
-        btn.onclick = () => { activePrestigeClass = cl.id; renderPrestigeView(); };
-        classBar.appendChild(btn);
-      });
-
-      const sortMode = document.getElementById('prestigeSortSelect').value;
-      const searchQ = (document.getElementById('prestigeSearchInput').value || '').trim().toLowerCase();
-
-      // Columnas a mostrar: todas en modo cascada, o exclusivamente la seleccionada en el desplegable
-      const headRow = document.getElementById('prestigeTableHeadRow');
-      const activeKeysToDisplay = sortMode === 'cascade_r5a2' ? PRESTIGE_KEYS_HIERARCHY : [sortMode];
-
-      const colTitles = {
-        'r5_a2':   '7★ R5 Asc 2',
-        'r5_a1':   '7★ R5 Asc 1',
-        'r5_base': '7★ R5',
-        'r4_a2':   '7★ R4 Asc 2',
-        'r4_a1':   '7★ R4 Asc 1',
-        'r4_base': '7★ R4'
-      };
-
-      const colStylesHead = {
-        'r5_a2':   'text-amber-400 bg-amber-950/20',
-        'r5_a1':   'text-amber-300',
-        'r5_base': 'text-yellow-200',
-        'r4_a2':   'text-purple-400',
-        'r4_a1':   'text-purple-300',
-        'r4_base': 'text-sky-300'
-      };
-
-      const colStylesCell = {
-        'r5_a2':   'font-mono font-extrabold text-amber-400 text-sm bg-amber-950/10',
-        'r5_a1':   'font-mono font-bold text-amber-300',
-        'r5_base': 'font-mono font-semibold text-yellow-200',
-        'r4_a2':   'font-mono font-semibold text-purple-400',
-        'r4_a1':   'font-mono text-purple-300',
-        'r4_base': 'font-mono text-sky-300'
-      };
-
-      let headHtml = `
-        <th class="py-3 px-3 w-12 text-center">#</th>
-        <th class="py-3 px-4">Personaje (x200)</th>
-        <th class="py-3 px-3 text-center">Clase</th>
-      `;
-      activeKeysToDisplay.forEach(k => {
-        headHtml += `<th class="py-3 px-3 text-right ${colStylesHead[k]}">${colTitles[k]}</th>`;
-      });
-      if (isAdmin) {
-        headHtml += `<th class="py-3 px-3 text-center">Editar</th>`;
-      }
-      headRow.innerHTML = headHtml;
-
-      // 1. Filtrar por clase (si eligió una clase o todas) y por si tiene valor en el rango seleccionado
-      let baseList = characters.filter(c => {
-        if (activePrestigeClass !== 'ALL' && c.clase !== activePrestigeClass) return false;
-        if (sortMode !== 'cascade_r5a2') {
-          const p = getCharPrestige(c);
-          if (!p[sortMode] || p[sortMode] <= 0) return false;
-        }
-        return true;
-      });
-
-      // 2. Ordenar según el modo activo
-      baseList.sort((a, b) => {
-        const scoreA = getPrimaryPrestigeScore(a, sortMode);
-        const scoreB = getPrimaryPrestigeScore(b, sortMode);
-        if (scoreB !== scoreA) return scoreB - scoreA;
-
-        // Si empatan en el prestigio principal (ej. 46.830), se ordenan alfabéticamente pero mantienen el mismo puesto
-        return a.name.localeCompare(b.name, 'es');
-      });
-
-      // 3. Calcular el puesto exacto compartiendo número cuando tienen el mismo prestigio principal
-      const rankMap = new Map();
-      let currentRank = 1;
-      for (let i = 0; i < baseList.length; i++) {
-        if (i > 0) {
-          const prevScore = getPrimaryPrestigeScore(baseList[i - 1], sortMode);
-          const currScore = getPrimaryPrestigeScore(baseList[i], sortMode);
-          if (currScore !== prevScore) {
-            currentRank = i + 1;
-          }
-        }
-        rankMap.set(baseList[i].id, currentRank);
-      }
-
-      // 4. Aplicar filtro del cuadro de búsqueda respetando el puesto calculado en la lista
-      const filtered = baseList.filter(c => {
-        if (searchQ && !c.name.toLowerCase().includes(searchQ)) return false;
-        return true;
-      });
-
-      const tbody = document.getElementById('prestigeTableBody');
-      tbody.innerHTML = '';
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-8 text-gray-500 italic">No hay personajes que coincidan con la selección.</td></tr>`;
-        return;
-      }
-
-      filtered.forEach((ch) => {
-        const p = getCharPrestige(ch);
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-800/50 transition cursor-pointer';
-        tr.onclick = (e) => {
-          if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
-          openDetailModal(ch.id);
-        };
-
-        const realRank = rankMap.get(ch.id) || 1;
-        const rankBadge = realRank === 1 ? '🥇 1' : realRank === 2 ? '🥈 2' : realRank === 3 ? '🥉 3' : `#${realRank}`;
-        const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
-
-        let rowColsHtml = `
-          <td class="py-2.5 px-3 font-extrabold text-center ${realRank <= 3 ? 'text-amber-400 text-sm' : 'text-gray-500'}">${rankBadge}</td>
-          <td class="py-2.5 px-4">
-            <div class="flex items-center gap-3">
-              ${ch.img 
-                ? `<img src="${ch.img}" class="w-9 h-9 rounded-full object-cover avatar-${ch.clase} bg-gray-950 flex-shrink-0">`
-                : `<div class="w-9 h-9 rounded-full flex items-center justify-center avatar-${ch.clase} bg-gray-950 font-extrabold text-gray-300 flex-shrink-0">${ch.name.charAt(0)}</div>`
-              }
-              <div>
-                <div class="font-bold text-sm ${hasYoutube ? 'text-red-400' : 'text-white'}">${ch.name}</div>
-                <div class="text-[10px] text-gray-400">Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}</div>
-              </div>
-            </div>
-          </td>
-          <td class="py-2.5 px-3 text-center">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${CLASES.find(c => c.id === ch.clase)?.headerStyle || ''}">${ch.clase}</span>
-          </td>
-        `;
-
-        activeKeysToDisplay.forEach(k => {
-          const val = p[k];
-          rowColsHtml += `<td class="py-2.5 px-3 text-right ${colStylesCell[k]}">${val ? val.toLocaleString('es-ES') : '—'}</td>`;
-        });
-
-        if (isAdmin) {
-          rowColsHtml += `
-            <td class="py-2.5 px-3 text-center">
-              <button onclick="openFormModal('${ch.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded text-[11px] font-semibold">
-                ✏️ Editar
-              </button>
-            </td>
-          `;
-        }
-
-        tr.innerHTML = rowColsHtml;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // =========================================================================
-    // RENDERIZADO DEL TABLERO TIER LIST
-    // =========================================================================
     function renderBoard() {
       const container = document.getElementById('tiersContainer');
       container.innerHTML = '';
@@ -1513,9 +1094,6 @@
       return card;
     }
 
-    // =========================================================================
-    // FILTROS ORDENADOS POR GRUPOS
-    // =========================================================================
     function renderFilterBars() {
       const barTier = document.getElementById('filterBarTier');
       barTier.innerHTML = '';
@@ -1665,9 +1243,6 @@
       });
     }
 
-    // =========================================================================
-    // GESTOR DE ETIQUETAS
-    // =========================================================================
     function openTagsManagerModal() {
       const container = document.getElementById('tagsManagerContent');
       container.innerHTML = '';
@@ -1760,9 +1335,6 @@
       openTagsManagerModal();
     }
 
-    // =========================================================================
-    // MODALES (CREAR / EDITAR PERSONAJE)
-    // =========================================================================
     function renderFormTagInputs() {
       const tierContainer = document.getElementById('formTierTagsContainer');
       tierContainer.innerHTML = '';
@@ -1955,11 +1527,7 @@
       persistChanges();
       closeFormModal();
       renderFilterBars();
-      if (currentMainView === 'tierlist') {
-        renderBoard();
-      } else {
-        renderPrestigeView();
-      }
+      renderBoard();
     }
 
     function getYoutubeId(url) {
@@ -2078,8 +1646,7 @@
             persistChanges();
             closeDetailModal();
             renderFilterBars();
-            if (currentMainView === 'tierlist') renderBoard();
-            else renderPrestigeView();
+            renderBoard();
           }
         };
       } else {
