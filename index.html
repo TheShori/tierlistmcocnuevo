@@ -1082,7 +1082,7 @@
         .then(() => closeLoginModal())
         .catch(() => {
           errEl.innerText = 'Error: Correo o contraseña incorrectos.';
-          errEl.classList.add('hidden');
+          errEl.classList.remove('hidden');
         })
         .finally(() => {
           btn.innerText = 'Entrar';
@@ -1238,7 +1238,7 @@
     }
 
     // =========================================================================
-    // RENDERIZADO DE LA PESTAÑA DE PRESTIGIO
+    // RENDERIZADO DE LA PESTAÑA DE PRESTIGIO (CON PUESTOS COMPARTIDOS Y EXACTOS)
     // =========================================================================
     function renderPrestigeView() {
       const classBar = document.getElementById('prestigeClassFilterBar');
@@ -1264,29 +1264,50 @@
 
       document.getElementById('prestigeAdminColHeader').classList.toggle('hidden', !isAdmin);
 
-      const filtered = characters.filter(c => {
+      // 1. Calcular el ranking global completo de todos los personajes para asignar puestos exactos reales
+      let globalList = [...characters];
+      globalList.sort((a, b) => {
+        const pA = getCharPrestige(a);
+        const pB = getCharPrestige(b);
+        if (sortMode !== 'cascade_r5a2') {
+          if (pB[sortMode] !== pA[sortMode]) return pB[sortMode] - pA[sortMode];
+        }
+        for (const key of PRESTIGE_KEYS_HIERARCHY) {
+          if (pB[key] !== pA[key]) return pB[key] - pA[key];
+        }
+        return a.name.localeCompare(b.name, 'es');
+      });
+
+      // Asignar puestos reales calculando empates (si comparten prestigio, comparten puesto)
+      const rankMap = new Map();
+      let currentRank = 1;
+      for (let i = 0; i < globalList.length; i++) {
+        if (i > 0) {
+          const prev = globalList[i - 1];
+          const curr = globalList[i];
+          const pPrev = getCharPrestige(prev);
+          const pCurr = getCharPrestige(curr);
+          
+          let isSame = true;
+          const checkKeys = sortMode !== 'cascade_r5a2' ? [sortMode, ...PRESTIGE_KEYS_HIERARCHY] : PRESTIGE_KEYS_HIERARCHY;
+          for (const k of checkKeys) {
+            if (pPrev[k] !== pCurr[k]) {
+              isSame = false;
+              break;
+            }
+          }
+          if (!isSame) {
+            currentRank = i + 1;
+          }
+        }
+        rankMap.set(globalList[i].id, currentRank);
+      }
+
+      // 2. Filtrar para la vista actual (clases y buscador)
+      const filtered = globalList.filter(c => {
         if (activePrestigeClass !== 'ALL' && c.clase !== activePrestigeClass) return false;
         if (searchQ && !c.name.toLowerCase().includes(searchQ)) return false;
         return true;
-      });
-
-      filtered.sort((a, b) => {
-        const pA = getCharPrestige(a);
-        const pB = getCharPrestige(b);
-
-        if (sortMode !== 'cascade_r5a2') {
-          if (pB[sortMode] !== pA[sortMode]) {
-            return pB[sortMode] - pA[sortMode];
-          }
-        }
-
-        for (const key of PRESTIGE_KEYS_HIERARCHY) {
-          if (pB[key] !== pA[key]) {
-            return pB[key] - pA[key];
-          }
-        }
-
-        return a.name.localeCompare(b.name, 'es');
       });
 
       const tbody = document.getElementById('prestigeTableBody');
@@ -1297,7 +1318,7 @@
         return;
       }
 
-      filtered.forEach((ch, idx) => {
+      filtered.forEach((ch) => {
         const p = getCharPrestige(ch);
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-gray-800/50 transition cursor-pointer';
@@ -1306,11 +1327,12 @@
           openDetailModal(ch.id);
         };
 
-        const rankBadge = idx === 0 ? '🥇 1' : idx === 1 ? '🥈 2' : idx === 2 ? '🥉 3' : `#${idx + 1}`;
+        const realRank = rankMap.get(ch.id) || 1;
+        const rankBadge = realRank === 1 ? '🥇 1' : realRank === 2 ? '🥈 2' : realRank === 3 ? '🥉 3' : `#${realRank}`;
         const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
 
         tr.innerHTML = `
-          <td class="py-2.5 px-3 font-extrabold text-center ${idx < 3 ? 'text-amber-400 text-sm' : 'text-gray-500'}">${rankBadge}</td>
+          <td class="py-2.5 px-3 font-extrabold text-center ${realRank <= 3 ? 'text-amber-400 text-sm' : 'text-gray-500'}">${rankBadge}</td>
           <td class="py-2.5 px-4">
             <div class="flex items-center gap-3">
               ${ch.img 
