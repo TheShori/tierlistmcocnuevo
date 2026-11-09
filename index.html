@@ -152,10 +152,11 @@
               🏆 Tabla de Prestigio MCOC (Base Singularidad x200)
             </h2>
             <p class="text-xs text-gray-400">
-              Ordenada en cascada automática empezando por <strong class="text-amber-300">7★ R5 Asc 2</strong> hacia R5 y Rango 4.
+              Muestra todos los rangos por defecto. Si seleccionas uno en concreto, la tabla se adaptará exclusivamente a ese rango.
             </p>
           </div>
 
+          <!-- Selector de Prioridad / Rango Específico -->
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-xs font-bold text-gray-400 uppercase">Prioridad de Orden:</span>
             <select id="prestigeSortSelect" onchange="renderPrestigeView()" class="bg-gray-950 border border-amber-500/50 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 focus:outline-none">
@@ -180,17 +181,8 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse min-w-[980px]">
             <thead>
-              <tr class="bg-gray-950/90 border-b border-gray-800 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-                <th class="py-3 px-3 w-12 text-center">#</th>
-                <th class="py-3 px-4">Personaje (x200)</th>
-                <th class="py-3 px-3 text-center">Clase</th>
-                <th class="py-3 px-3 text-right text-amber-400 bg-amber-950/20">7★ R5 Asc 2</th>
-                <th class="py-3 px-3 text-right text-amber-300">7★ R5 Asc 1</th>
-                <th class="py-3 px-3 text-right text-yellow-200">7★ R5</th>
-                <th class="py-3 px-3 text-right text-purple-400">7★ R4 Asc 2</th>
-                <th class="py-3 px-3 text-right text-purple-300">7★ R4 Asc 1</th>
-                <th class="py-3 px-3 text-right text-sky-300">7★ R4</th>
-                <th id="prestigeAdminColHeader" class="py-3 px-3 text-center hidden">Editar</th>
+              <tr id="prestigeTableHeadRow" class="bg-gray-950/90 border-b border-gray-800 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+                <!-- Se genera dinámicamente según el filtro de rango -->
               </tr>
             </thead>
             <tbody id="prestigeTableBody" class="divide-y divide-gray-800/70 text-xs"></tbody>
@@ -1071,7 +1063,7 @@
 
       if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
         errEl.innerText = `Solo el correo ${ADMIN_EMAIL} está autorizado.`;
-        errEl.classList.remove('hidden');
+        errEl.classList.add('hidden');
         return;
       }
 
@@ -1082,7 +1074,7 @@
         .then(() => closeLoginModal())
         .catch(() => {
           errEl.innerText = 'Error: Correo o contraseña incorrectos.';
-          errEl.classList.remove('hidden');
+          errEl.classList.add('hidden');
         })
         .finally(() => {
           btn.innerText = 'Entrar';
@@ -1238,7 +1230,7 @@
     }
 
     // =========================================================================
-    // RENDERIZADO DE LA PESTAÑA DE PRESTIGIO (CON PUESTOS COMPARTIDOS Y EXACTOS)
+    // RENDERIZADO DE LA PESTAÑA DE PRESTIGIO (DINÁMICO SEGÚN RANGO SELECCIONADO)
     // =========================================================================
     function renderPrestigeView() {
       const classBar = document.getElementById('prestigeClassFilterBar');
@@ -1264,7 +1256,36 @@
 
       document.getElementById('prestigeAdminColHeader').classList.toggle('hidden', !isAdmin);
 
-      // 1. Calcular el ranking global completo de todos los personajes para asignar puestos exactos reales
+      // Determinar qué columnas mostrar según el selector de rango
+      const headRow = document.getElementById('prestigeTableHeadRow');
+      let activeKeysToDisplay = PRESTIGE_KEYS_HIERARCHY;
+      
+      if (sortMode !== 'cascade_r5a2') {
+        activeKeysToDisplay = [sortMode]; // Si eligió un rango específico, mostramos solo ese
+      }
+
+      const colTitles = {
+        'r5_a2': '7★ R5 Asc 2',
+        'r5_a1': '7★ R5 Asc 1',
+        'r5_base': '7★ R5',
+        'r4_a2': '7★ R4 Asc 2',
+        'r4_a1': '7★ R4 Asc 1',
+        'r4_base': '7★ R4'
+      };
+
+      let headHtml = `
+        <th class="py-3 px-3 w-12 text-center">#</th>
+        <th class="py-3 px-4">Personaje (x200)</th>
+        <th class="py-3 px-3 text-center">Clase</th>
+      `;
+      activeKeysToDisplay.forEach((k, idx) => {
+        const highlight = idx === 0 ? 'text-amber-400 bg-amber-950/20 font-extrabold' : 'text-gray-300';
+        headHtml += `<th class="py-3 px-3 text-right ${highlight}">${colTitles[k]}</th>`;
+      });
+      headHtml += `<th id="prestigeAdminColHeader" class="py-3 px-3 text-center ${isAdmin ? '' : 'hidden'}">Editar</th>`;
+      headRow.innerHTML = headHtml;
+
+      // 1. Ordenar la lista global completa según el criterio seleccionado o cascada
       let globalList = [...characters];
       globalList.sort((a, b) => {
         const pA = getCharPrestige(a);
@@ -1278,7 +1299,7 @@
         return a.name.localeCompare(b.name, 'es');
       });
 
-      // Asignar puestos reales calculando empates (si comparten prestigio, comparten puesto)
+      // 2. Asignar puestos compartidos reales (empates con idéntico valor en la métrica activa comparten puesto)
       const rankMap = new Map();
       let currentRank = 1;
       for (let i = 0; i < globalList.length; i++) {
@@ -1289,7 +1310,7 @@
           const pCurr = getCharPrestige(curr);
           
           let isSame = true;
-          const checkKeys = sortMode !== 'cascade_r5a2' ? [sortMode, ...PRESTIGE_KEYS_HIERARCHY] : PRESTIGE_KEYS_HIERARCHY;
+          const checkKeys = sortMode !== 'cascade_r5a2' ? [sortMode] : PRESTIGE_KEYS_HIERARCHY;
           for (const k of checkKeys) {
             if (pPrev[k] !== pCurr[k]) {
               isSame = false;
@@ -1303,7 +1324,7 @@
         rankMap.set(globalList[i].id, currentRank);
       }
 
-      // 2. Filtrar para la vista actual (clases y buscador)
+      // 3. Filtrar para la vista actual (clases y buscador)
       const filtered = globalList.filter(c => {
         if (activePrestigeClass !== 'ALL' && c.clase !== activePrestigeClass) return false;
         if (searchQ && !c.name.toLowerCase().includes(searchQ)) return false;
@@ -1331,7 +1352,7 @@
         const rankBadge = realRank === 1 ? '🥇 1' : realRank === 2 ? '🥈 2' : realRank === 3 ? '🥉 3' : `#${realRank}`;
         const hasYoutube = ch.youtube && ch.youtube.trim() !== "";
 
-        tr.innerHTML = `
+        let rowColsHtml = `
           <td class="py-2.5 px-3 font-extrabold text-center ${realRank <= 3 ? 'text-amber-400 text-sm' : 'text-gray-500'}">${rankBadge}</td>
           <td class="py-2.5 px-4">
             <div class="flex items-center gap-3">
@@ -1348,20 +1369,23 @@
           <td class="py-2.5 px-3 text-center">
             <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${CLASES.find(c => c.id === ch.clase)?.headerStyle || ''}">${ch.clase}</span>
           </td>
-          <td class="py-2.5 px-3 text-right font-mono font-extrabold text-amber-400 text-sm bg-amber-950/10">${p.r5_a2 ? p.r5_a2.toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-3 text-right font-mono font-bold text-amber-300">${p.r5_a1 ? p.r5_a1.toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-3 text-right font-mono font-semibold text-yellow-200">${p.r5_base ? p.r5_base.toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-3 text-right font-mono font-semibold text-purple-400">${p.r4_a2 ? p.r4_a2.toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-3 text-right font-mono text-purple-300">${p.r4_a1 ? p.r4_a1.toLocaleString('es-ES') : '—'}</td>
-          <td class="py-2.5 px-3 text-right font-mono text-sky-300">${p.r4_base ? p.r4_base.toLocaleString('es-ES') : '—'}</td>
-          ${isAdmin ? `
-            <td class="py-2.5 px-3 text-center">
-              <button onclick="openFormModal('${ch.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded text-[11px] font-semibold">
-                ✏️ Editar
-              </button>
-            </td>
-          ` : ''}
         `;
+
+        activeKeysToDisplay.forEach((k, idx) => {
+          const val = p[k];
+          const style = idx === 0 ? 'font-mono font-extrabold text-amber-400 text-sm bg-amber-950/10' : 'font-mono text-gray-300';
+          rowColsHtml += `<td class="py-2.5 px-3 text-right ${style}">${val ? val.toLocaleString('es-ES') : '—'}</td>`;
+        });
+
+        rowColsHtml += isAdmin ? `
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="openFormModal('${ch.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded text-[11px] font-semibold">
+              ✏️ Editar
+            </button>
+          </td>
+        ` : '';
+
+        tr.innerHTML = rowColsHtml;
         tbody.appendChild(tr);
       });
     }
