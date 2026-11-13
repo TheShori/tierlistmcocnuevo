@@ -58,6 +58,11 @@
         🔼 Ocultar Filtros
       </button>
 
+      <!-- BOTÓN PANEL DE ANALÍTICAS ADMIN -->
+      <button id="btnAnalytics" onclick="openAnalyticsModal()" class="hidden bg-pink-600 hover:bg-pink-500 text-white font-extrabold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition shadow-lg">
+        📈 Estadísticas
+      </button>
+
       <button id="btnManageTags" onclick="openTagsManagerModal()" class="hidden bg-sky-700 hover:bg-sky-600 text-white font-semibold px-3.5 py-1.5 rounded-lg text-xs md:text-sm transition">
         ⚙️ Gestionar Etiquetas
       </button>
@@ -122,6 +127,79 @@
     </aside>
   </div>
 
+  <!-- MODAL PANEL DE CONTROL DE ESTADÍSTICAS (SOLO ADMIN) -->
+  <div id="analyticsModal" class="fixed inset-0 bg-black/85 hidden items-center justify-center z-50 p-4">
+    <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex justify-between items-center mb-4 flex-shrink-0">
+        <div>
+          <h3 class="text-xl font-extrabold text-white flex items-center gap-2">
+            📈 Panel de Control y Analíticas en Tiempo Real
+          </h3>
+          <p class="text-xs text-gray-400">Monitoreo de visitas, clics en personajes y redirecciones a tu canal de YouTube.</p>
+        </div>
+        <button onclick="closeAnalyticsModal()" class="text-gray-400 hover:text-white text-2xl leading-none">&times;</button>
+      </div>
+
+      <!-- Tarjetas Resumen -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5 flex-shrink-0">
+        <div class="bg-gray-950 border border-purple-500/30 rounded-xl p-3.5">
+          <span class="text-[11px] font-bold uppercase text-purple-400 block">Visitas Tier List</span>
+          <span id="statTierVisits" class="text-2xl font-extrabold text-white font-mono">0</span>
+        </div>
+        <div class="bg-gray-950 border border-amber-500/30 rounded-xl p-3.5">
+          <span class="text-[11px] font-bold uppercase text-amber-400 block">Visitas Prestigio</span>
+          <span id="statPrestigeVisits" class="text-2xl font-extrabold text-white font-mono">0</span>
+        </div>
+        <div class="bg-gray-950 border border-sky-500/30 rounded-xl p-3.5">
+          <span class="text-[11px] font-bold uppercase text-sky-400 block">Clics en Personajes</span>
+          <span id="statTotalCharClicks" class="text-2xl font-extrabold text-white font-mono">0</span>
+        </div>
+        <div class="bg-gray-950 border border-red-500/30 rounded-xl p-3.5">
+          <span class="text-[11px] font-bold uppercase text-red-400 block">Clics a YouTube</span>
+          <span id="statTotalYtClicks" class="text-2xl font-extrabold text-red-400 font-mono">0</span>
+        </div>
+      </div>
+
+      <!-- Buscador y selector de orden en Estadísticas -->
+      <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-2 mb-3 flex-shrink-0">
+        <input type="text" id="statSearchInput" oninput="renderAnalyticsTable()" placeholder="🔍 Filtrar personaje en las estadísticas..." class="bg-gray-950 border border-gray-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-pink-500 sm:w-72">
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-gray-400 font-bold">Ordenar por:</span>
+          <select id="statSortSelect" onchange="renderAnalyticsTable()" class="bg-gray-950 border border-gray-700 rounded-xl px-2.5 py-1.5 text-xs text-white font-semibold">
+            <option value="views">Más vistos (Clics en ficha)</option>
+            <option value="yt">Más clics hacia YouTube</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla de Personajes más vistos / YouTube -->
+      <div class="flex-1 overflow-y-auto border border-gray-800 rounded-xl bg-gray-950/60">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-gray-950 border-b border-gray-800 text-[11px] font-extrabold uppercase text-gray-400 sticky top-0">
+              <th class="py-2.5 px-3 w-12 text-center">#</th>
+              <th class="py-2.5 px-4">Personaje</th>
+              <th class="py-2.5 px-3 text-center">Clase</th>
+              <th class="py-2.5 px-4 text-right text-sky-400">👁️ Clics en Ficha</th>
+              <th class="py-2.5 px-4 text-right text-red-400">▶️ Clics a YouTube</th>
+              <th class="py-2.5 px-4 text-right text-gray-400">% Conversión YT</th>
+            </tr>
+          </thead>
+          <tbody id="analyticsTableBody" class="divide-y divide-gray-800/60"></tbody>
+        </table>
+      </div>
+
+      <div class="flex justify-between items-center pt-4 mt-3 border-t border-gray-800 flex-shrink-0">
+        <button onclick="resetAnalyticsData()" class="text-xs text-red-400 hover:text-red-300 underline">
+          🗑️ Reiniciar todos los contadores a cero
+        </button>
+        <button onclick="closeAnalyticsModal()" class="px-4 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs">
+          Cerrar Panel
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL LOGIN ADMIN -->
   <div id="loginModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
@@ -166,7 +244,7 @@
     </div>
   </div>
 
-  <!-- MODAL CREAR / EDITAR PERSONAJE (CON AUTOCOMPLETADO DE PRESTIGIOS) -->
+  <!-- MODAL CREAR / EDITAR PERSONAJE -->
   <div id="formModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
     <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
@@ -780,6 +858,130 @@
     let activeGameFilters = [];
     let isAdmin = false;
     let sortableInstances = [];
+    let analyticsData = { tierlistViews: 0, prestigeViews: 0, totalCharClicks: 0, totalYtClicks: 0, charViews: {}, ytClicks: {} };
+
+    // =========================================================================
+    // SISTEMA DE TELEMETRÍA Y ANALÍTICAS EN TIEMPO REAL
+    // =========================================================================
+    function initAnalytics() {
+      db.collection('analytics').doc('stats').onSnapshot(doc => {
+        if (doc.exists) {
+          analyticsData = doc.data();
+          if (!document.getElementById('analyticsModal').classList.contains('hidden')) {
+            renderAnalyticsTable();
+          }
+        }
+      });
+
+      // Registrar visita de sesión (espera 2 seg para comprobar si eres Admin y no contar tus propias entradas)
+      setTimeout(() => {
+        if (!isAdmin && !sessionStorage.getItem('visited_tierlist')) {
+          sessionStorage.setItem('visited_tierlist', '1');
+          db.collection('analytics').doc('stats').set({
+            tierlistViews: firebase.firestore.FieldValue.increment(1)
+          }, { merge: true }).catch(() => {});
+        }
+      }, 2000);
+    }
+
+    function trackCharView(charId) {
+      if (isAdmin) return;
+      db.collection('analytics').doc('stats').set({
+        totalCharClicks: firebase.firestore.FieldValue.increment(1),
+        charViews: { [charId]: firebase.firestore.FieldValue.increment(1) }
+      }, { merge: true }).catch(() => {});
+    }
+
+    function trackYoutubeClick(charId) {
+      if (isAdmin) return;
+      db.collection('analytics').doc('stats').set({
+        totalYtClicks: firebase.firestore.FieldValue.increment(1),
+        ytClicks: { [charId]: firebase.firestore.FieldValue.increment(1) }
+      }, { merge: true }).catch(() => {});
+    }
+
+    function openAnalyticsModal() {
+      renderAnalyticsTable();
+      document.getElementById('analyticsModal').classList.remove('hidden');
+      document.getElementById('analyticsModal').classList.add('flex');
+    }
+
+    function closeAnalyticsModal() {
+      document.getElementById('analyticsModal').classList.add('hidden');
+      document.getElementById('analyticsModal').classList.remove('flex');
+    }
+
+    function renderAnalyticsTable() {
+      document.getElementById('statTierVisits').innerText = (analyticsData.tierlistViews || 0).toLocaleString('es-ES');
+      document.getElementById('statPrestigeVisits').innerText = (analyticsData.prestigeViews || 0).toLocaleString('es-ES');
+      document.getElementById('statTotalCharClicks').innerText = (analyticsData.totalCharClicks || 0).toLocaleString('es-ES');
+      document.getElementById('statTotalYtClicks').innerText = (analyticsData.totalYtClicks || 0).toLocaleString('es-ES');
+
+      const searchQ = (document.getElementById('statSearchInput')?.value || '').trim().toLowerCase();
+      const sortBy = document.getElementById('statSortSelect')?.value || 'views';
+      const cViews = analyticsData.charViews || {};
+      const yClicks = analyticsData.ytClicks || {};
+
+      let list = characters.map(ch => {
+        const views = Number(cViews[ch.id]) || 0;
+        const yt = Number(yClicks[ch.id]) || 0;
+        const conv = views > 0 ? ((yt / views) * 100).toFixed(1) : '0.0';
+        return { ...ch, views, yt, conv };
+      }).filter(item => {
+        if (searchQ && !item.name.toLowerCase().includes(searchQ)) return false;
+        return item.views > 0 || item.yt > 0 || searchQ !== '';
+      });
+
+      list.sort((a, b) => {
+        if (sortBy === 'yt') {
+          if (b.yt !== a.yt) return b.yt - a.yt;
+          return b.views - a.views;
+        }
+        if (b.views !== a.views) return b.views - a.views;
+        return b.yt - a.yt;
+      });
+
+      const tbody = document.getElementById('analyticsTableBody');
+      tbody.innerHTML = '';
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500 italic">Todavía no hay clics registrados en personajes.</td></tr>`;
+        return;
+      }
+
+      list.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-800/50 transition';
+        tr.innerHTML = `
+          <td class="py-2 px-3 text-center font-bold text-gray-500">#${idx + 1}</td>
+          <td class="py-2 px-4 font-bold text-white flex items-center gap-2.5">
+            ${item.img ? `<img src="${item.img}" class="w-7 h-7 rounded-full object-cover avatar-${item.clase}">` : ''}
+            <span>${item.name}</span>
+          </td>
+          <td class="py-2 px-3 text-center">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold border ${CLASES.find(c => c.id === item.clase)?.headerStyle || ''}">${item.clase}</span>
+          </td>
+          <td class="py-2 px-4 text-right font-mono font-bold text-sky-400 text-sm">${item.views.toLocaleString('es-ES')}</td>
+          <td class="py-2 px-4 text-right font-mono font-bold text-red-400 text-sm">${item.yt.toLocaleString('es-ES')}</td>
+          <td class="py-2 px-4 text-right font-mono text-gray-400">${item.conv}%</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function resetAnalyticsData() {
+      if (!isAdmin) return;
+      if (confirm('¿Seguro que quieres reiniciar todos los contadores de visitas y clics a 0?')) {
+        db.collection('analytics').doc('stats').set({
+          tierlistViews: 0,
+          prestigeViews: 0,
+          totalCharClicks: 0,
+          totalYtClicks: 0,
+          charViews: {},
+          ytClicks: {}
+        }).then(() => alert('Contadores reiniciados a cero.'));
+      }
+    }
 
     function normalizeStr(s) {
       return (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
@@ -948,6 +1150,7 @@
       const badge = document.getElementById('statusBadge');
       const btnAdd = document.getElementById('btnAddChar');
       const btnTags = document.getElementById('btnManageTags');
+      const btnStats = document.getElementById('btnAnalytics');
       const bench = document.getElementById('sidebarBench');
       const btnAuth = document.getElementById('btnAdminAuth');
 
@@ -956,6 +1159,7 @@
         badge.className = 'hidden sm:inline-block text-xs px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-700';
         btnAdd.classList.remove('hidden');
         btnTags.classList.remove('hidden');
+        btnStats.classList.remove('hidden');
         bench.classList.remove('hidden');
         btnAuth.innerText = 'Cerrar sesión';
       } else {
@@ -963,6 +1167,7 @@
         badge.className = 'hidden sm:inline-block text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700';
         btnAdd.classList.add('hidden');
         btnTags.classList.add('hidden');
+        btnStats.classList.add('hidden');
         bench.classList.add('hidden');
         btnAuth.innerText = '🔒 Acceso Admin';
       }
@@ -972,6 +1177,7 @@
     function initData() {
       renderFilterBars();
       renderFormTagInputs();
+      initAnalytics();
 
       db.collection('tierlist').doc('main').onSnapshot(doc => {
         if (doc.exists && doc.data().characters) {
@@ -1541,6 +1747,9 @@
       const ch = characters.find(c => c.id === charId);
       if (!ch) return;
 
+      // Registrar clic en la ficha del personaje
+      trackCharView(ch.id);
+
       document.getElementById('detailName').innerText = ch.name;
       document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
       document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
@@ -1587,9 +1796,11 @@
       if (ytId) {
         ytThumb.src = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
         ytBtn.href = ch.youtube;
+        ytBtn.onclick = () => trackYoutubeClick(ch.id);
         videoSection.classList.remove('hidden');
       } else {
         ytBtn.href = "#";
+        ytBtn.onclick = null;
         videoSection.classList.add('hidden');
       }
 
