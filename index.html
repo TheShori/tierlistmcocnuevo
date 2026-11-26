@@ -361,6 +361,7 @@
         <div id="detailPrestigeBox" class="hidden bg-gray-950/80 p-3.5 rounded-xl border border-amber-500/30">
           <h4 class="text-[11px] font-bold uppercase tracking-wider text-amber-400 mb-2.5">🏆 Prestigio del Personaje (Singularidad x200)</h4>
           <div id="detailPrestigeValues" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs"></div>
+          <p id="detailPrestigeSource" class="mt-2 text-[10px] text-gray-400"></p>
         </div>
 
         <div>
@@ -405,6 +406,7 @@
     </div>
   </div>
 
+  <script src="./prestige-sync.js"></script>
   <script>
     const ADMIN_EMAIL = "thesoriplayer@gmail.com";
 
@@ -827,6 +829,11 @@
 31,260--37,070--`;
 
     const EN_TO_ES_ALIASES = {
+      "kitty pryde": ["Kitty Pride"],
+      "negasonic teenage warhead": ["Negasonic"],
+      "gambit": ["Gambito"],
+      "agent venom": ["Agente Venom"],
+      "patriot": ["Patriota"],
       "captain britain": ["Capitana Britania", "Captain Britain"],
       "mister sinister": ["Mister Siniestro", "Mr Siniestro", "Mister Sinister"],
       "doctor doom": ["Doctor Doom", "Doctor Muerte", "Dr Doom"],
@@ -890,15 +897,15 @@
       "black cat": ["Gata Negra", "Black Cat"],
       "white tiger": ["Tigre Blanco", "White Tiger"],
       "storm": ["Tormenta", "Storm"],
-      "storm (pyramid x)": ["Tormenta (Pirámide X)", "Tormenta Piramide X", "Storm (Pyramid X)"],
+      "storm (pyramid x)": ["Tormenta (Pirámide X)", "Tormenta Piramide X", "Tormenta (Pyramid X)", "Storm (Pyramid X)"],
       "archangel": ["Arcángel", "Arcangel", "Archangel"],
       "beast": ["Bestia", "Beast"],
       "colossus": ["Coloso", "Colossus"],
-      "colossus (age of apocalypse)": ["Coloso (Era de Apocalipsis)", "Colossus (Age of Apocalypse)"],
+      "colossus (age of apocalypse)": ["Coloso (Era de Apocalipsis)", "Coloso (Age of Apocalypse)", "Colossus (Age of Apocalypse)"],
       "unstoppable colossus": ["Coloso Imparable", "Unstoppable Colossus"],
       "nightcrawler": ["Rondador Nocturno", "Nightcrawler"],
       "wolverine": ["Lobezno", "Wolverine"],
-      "wolverine (weapon x)": ["Lobezno (Arma X)", "Wolverine (Weapon X)", "Arma X"],
+      "wolverine (weapon x)": ["Lobezno (Arma X)", "Wolverine (Weapon X)", "Wolverine Arma X", "Arma X"],
       "wolverine (x-23)": ["Lobezno (X-23)", "X-23", "Wolverine (X-23)"],
       "old man logan": ["El Viejo Logan", "Viejo Logan", "Old Man Logan"],
       "rogue": ["Pícara", "Picara", "Rogue"],
@@ -987,6 +994,14 @@
     let activeGameFilters = [];
     let isAdmin = false;
     let sortableInstances = [];
+    const prestigeSync = window.McocPrestige ? window.McocPrestige.createClient({
+      aliases: EN_TO_ES_ALIASES,
+      onChange: () => {
+        const modal = document.getElementById('detailModal');
+        const ch = characters.find(c => c.id === modal.dataset.charId);
+        if (ch && !modal.classList.contains('hidden')) renderDetailPrestige(ch);
+      }
+    }) : null;
 
     function normalizeStr(s) {
       return (s || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
@@ -994,6 +1009,8 @@
 
     function getOfficialPrestigeForName(targetName) {
       if (!targetName || !targetName.trim()) return null;
+      const synced = prestigeSync?.get(targetName);
+      if (synced) return synced;
       const qNorm = normalizeStr(targetName);
 
       const lines = OFFICIAL_MCOC_GG_RAW.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('Champion') && !l.startsWith('Prestige'));
@@ -1062,7 +1079,7 @@
     }
 
     function getCharPrestige(ch) {
-      const p = ch.prestige || {};
+      const p = prestigeSync?.get(ch.name) || ch.prestige || {};
       return {
         r5_a2:   Number(p.r5_a2) || 0,
         r5_a1:   Number(p.r5_a1) || 0,
@@ -1752,17 +1769,7 @@
       return (match && match[2].length === 11) ? match[2] : null;
     }
 
-    function openDetailModal(charId) {
-      const ch = characters.find(c => c.id === charId);
-      if (!ch) return;
-
-      // Registrar clic en el personaje para las analíticas globales
-      trackEvent('char_click', ch.name);
-
-      document.getElementById('detailName').innerText = ch.name;
-      document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
-      document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
-
+    function renderDetailPrestige(ch) {
       const p = getCharPrestige(ch);
       const pBox = document.getElementById('detailPrestigeBox');
       const pVals = document.getElementById('detailPrestigeValues');
@@ -1779,6 +1786,31 @@
       } else {
         pBox.classList.add('hidden');
       }
+
+      const synced = prestigeSync?.get(ch.name);
+      const state = prestigeSync?.getState();
+      const source = document.getElementById('detailPrestigeSource');
+      if (synced && state.updatedAt) {
+        const checked = new Date(state.updatedAt).toLocaleString('es-ES');
+        source.innerText = `Fuente: mcoc.gg · ${state.fresh ? 'Comprobado' : 'Última copia válida'}: ${checked}`;
+      } else {
+        source.innerText = 'Prestigio guardado · Sin conexión actual con mcoc.gg';
+      }
+    }
+
+    function openDetailModal(charId) {
+      const ch = characters.find(c => c.id === charId);
+      if (!ch) return;
+
+      // Registrar clic en el personaje para las analíticas globales
+      trackEvent('char_click', ch.name);
+
+      document.getElementById('detailName').innerText = ch.name;
+      document.getElementById('detailClassBadge').innerText = `Clase: ${ch.clase} | Tier: ${ch.tier === 'BENCH' ? 'Sin clasificar' : ch.tier}`;
+      document.getElementById('detailNotes').innerText = ch.notes || 'Sin notas adicionales todavía.';
+
+      document.getElementById('detailModal').dataset.charId = charId;
+      renderDetailPrestige(ch);
 
       const tierTagsContainer = document.getElementById('detailTierTags');
       tierTagsContainer.innerHTML = '';
@@ -1884,6 +1916,7 @@
     }
 
     initData();
+    prestigeSync?.start();
   </script>
 </body>
 </html>
