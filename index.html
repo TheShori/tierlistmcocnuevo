@@ -100,7 +100,7 @@
       <div id="tiersContainer" class="space-y-8 min-w-[1000px] max-w-[1600px] mx-auto pb-12"></div>
     </main>
 
-    <aside id="sidebarBench" class="w-80 h-full bg-gray-900 border-l border-gray-800 p-3.5 flex flex-col gap-3 hidden flex-shrink-0 overflow-hidden">
+    <aside id="sidebarBench" class="w-80 h-full bg-gray-900 border-l border-gray-800 p-3.5 flex flex-col gap-3 flex-shrink-0 overflow-hidden">
       <div class="flex flex-col flex-1 min-h-0">
         <div class="mb-1.5 flex items-center justify-between flex-shrink-0">
           <span class="text-xs font-bold text-white">📥 Nuevos Personajes</span>
@@ -1157,7 +1157,6 @@
       const btnAdd = document.getElementById('btnAddChar');
       const btnTags = document.getElementById('btnManageTags');
       const btnAnalytics = document.getElementById('btnAnalytics');
-      const bench = document.getElementById('sidebarBench');
       const btnAuth = document.getElementById('btnAdminAuth');
 
       if (isAdmin) {
@@ -1166,7 +1165,6 @@
         btnAdd.classList.remove('hidden');
         btnTags.classList.remove('hidden');
         btnAnalytics.classList.remove('hidden');
-        bench.classList.remove('hidden');
         btnAuth.innerText = 'Cerrar sesión';
       } else {
         badge.innerText = 'Modo Visitante';
@@ -1174,7 +1172,8 @@
         btnAdd.classList.add('hidden');
         btnTags.classList.add('hidden');
         btnAnalytics.classList.add('hidden');
-        bench.classList.add('hidden');
+        document.getElementById('adminActionsContainer').classList.add('hidden');
+        closeFormModal();
         btnAuth.innerText = '🔒 Acceso Admin';
       }
       initDragAndDrop();
@@ -1425,6 +1424,7 @@
           scrollSensitivity: 80,
           scrollSpeed: 16,
           onEnd: function (evt) {
+            if (!isAdmin) return;
             const charId = evt.item.dataset.id;
             const targetTier = evt.to.dataset.tier;
             const targetClase = evt.to.dataset.clase;
@@ -1631,6 +1631,7 @@
     }
 
     function openFormModal(editId = null) {
+      if (!isAdmin) return;
       document.getElementById('charForm').reset();
       document.getElementById('editCharId').value = editId || '';
       renderFormTagInputs();
@@ -1682,6 +1683,7 @@
 
     function submitCharForm(e) {
       e.preventDefault();
+      if (!isAdmin) return;
       const editId = document.getElementById('editCharId').value;
       const name = document.getElementById('charName').value.trim();
       const clase = document.getElementById('charClass').value;
@@ -1859,6 +1861,7 @@
           openFormModal(ch.id);
         };
         document.getElementById('btnDeleteChar').onclick = () => {
+          if (!isAdmin) return;
           if (confirm(`¿Eliminar a ${ch.name}?`)) {
             characters = characters.filter(item => item.id !== ch.id);
             persistChanges();
@@ -1884,3 +1887,4 @@
   </script>
 </body>
 </html>
+
